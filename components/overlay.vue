@@ -12,7 +12,8 @@
                     <img :style="showImg" ref="mediaElement" width="auto" height="auto" :src="getEmbedUrl" v-if="! video">
                 </div>
 
-                <div @click.stop="stopTheEvent" v-if="isSelectable">
+                <p id="silentbox-overlay__description" v-if="this.$parent.description">{{ this.$parent.description }}</p>
+                <div class="add-to-collection-fullscreen-gallery" @click.stop="stopTheEvent" v-if="isSelectable">
                 <b-checkbox
                     class="form-check-input"
                     :id="`overlayAssetSelector${this.$parent.item.id}`"
@@ -21,9 +22,10 @@
                     v-model="isSelected"
                     :disabled="(this.$parent.selection.length >= this.$parent.total) && (this.$parent.selection.indexOf(this.$parent.item) == -1)"
                 >
+                <span>Add to selection <strong>({{this.$parent.selection.length}}/{{this.$parent.total}})</strong></span>
+                
                 </b-checkbox>
                 </div>
-                <p id="silentbox-overlay__description" v-if="this.$parent.description">{{ this.$parent.description }}</p>
             </div>
         </div>
 
@@ -57,7 +59,7 @@
                 return this.$parent.total > 0;
             },
             loadingColor() {
-                return getComputedStyle(document.documentElement).getPropertyValue('--primary');
+                return getComputedStyle(document.documentElement).getPropertyValue('--white');
             },
             isSelected: {
                 get() {

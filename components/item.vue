@@ -25,6 +25,9 @@
                     return false;
                 }
             },
+            'item': {
+                type: Object
+            },
             // Short description below image.
             'description': String,
             'position': {},
@@ -78,6 +81,7 @@
                     url: this.embedUrl,
                     position: itemIndex,
                     autoplay: this.autoplay,
+                    item: this.item,
                     description: this.description
                 });
             }
@@ -88,6 +92,7 @@
             this.$parent.items.list.push({
                 src: this.src,
                 autoplay: this.autoplay,
+                item: this.item,
                 desc: this.description,
                 position: this.position
             });

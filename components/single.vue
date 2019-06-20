@@ -30,6 +30,9 @@
             },
             // Short description below image.
             'description': String,
+            item: {
+                type: Object
+            },
             'thumbnailWidth': {
                 type: String,
                 default: '200px'

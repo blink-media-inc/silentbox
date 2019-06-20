@@ -10,6 +10,20 @@
 
     export default {
         name: 'SilentboxGroup',
+        props: {
+            'selection': {
+                type: Array,
+                default() {
+                    return [];
+                }
+            },
+            'total': {
+                type: Number,
+                default() {
+                    return 0;
+                }
+            },
+        },
         data() {
             return {
                 overlayVisibility: false,
@@ -20,6 +34,7 @@
                     list: []
                 },
                 autoplay: false,
+                item: null,
                 description: ''
             }
         },
@@ -64,6 +79,9 @@
 
                 this.description = (this.items.list[this.items.position].desc !== undefined)
                     ? this.items.list[this.items.position].desc : false;
+
+                this.item = (this.items.list[this.items.position].item !== undefined)
+                    ? this.items.list[this.items.position].item : null;
             },
             /**
              * Move to previous item in a group.
@@ -84,6 +102,9 @@
 
                 this.description = (this.items.list[this.items.position].desc !== undefined)
                     ? this.items.list[this.items.position].desc : false;
+
+                this.item = (this.items.list[this.items.position].item !== undefined)
+                    ? this.items.list[this.items.position].item : null;
             },
             /**
              * Set item that shuld be displayed.
@@ -96,6 +117,7 @@
                 this.overlayVisibility = true;
                 this.autoplay = item.autoplay;
                 this.description = item.description;
+                this.item = item.item;
             }
         },
         components: {

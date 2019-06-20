@@ -4,9 +4,24 @@
 
         <div id="silentbox-overlay__content" @click.stop="closeSilentboxOverlay">
             <div id="silentbox-overlay__embed">
-                <div id="silentbox-overlay__container">
-                    <iframe width="100%" height="100%" v-if="video" :src="getEmbedUrl" frameborder="0" :allow="getAutoplayState" allowfullscreen></iframe>
-                    <img width="auto" height="auto" :src="getEmbedUrl" v-if="! video">
+                <div ref="mediaContainer" id="silentbox-overlay__container">
+		                <main class="empty-state" v-if="loading">
+		                    <beat-loader :color="loadingColor" size="15px"></beat-loader>
+		                </main>
+                    <iframe ref="mediaElement" width="100%" height="100%" v-if="video" :src="getEmbedUrl" frameborder="0" :allow="getAutoplayState" allowfullscreen></iframe>
+                    <img :style="showImg" ref="mediaElement" width="auto" height="auto" :src="getEmbedUrl" v-if="! video">
+                </div>
+
+                <div @click.stop="stopTheEvent" v-if="isSelectable">
+                <b-checkbox
+                    class="form-check-input"
+                    :id="`overlayAssetSelector${this.$parent.item.id}`"
+                    type="checkbox"
+                    aria-label="..."
+                    v-model="isSelected"
+                    :disabled="(this.$parent.selection.length >= this.$parent.total) && (this.$parent.selection.indexOf(this.$parent.item) == -1)"
+                >
+                </b-checkbox>
                 </div>
                 <p id="silentbox-overlay__description" v-if="this.$parent.description">{{ this.$parent.description }}</p>
             </div>
@@ -25,16 +40,48 @@
 
 <script>
     import VideoUrlDecoderMixin from './../mixins/videoUrlDecoder';
+    import imagesLoaded from 'imagesloaded';
 
     export default {
         name: 'SilentboxOverlay',
         mixins: [ VideoUrlDecoderMixin ],
         data() {
             return {
-                video: false
+                video: false,
+                loading: false,
+                imgLoad: null
             }
         },
         computed: {
+            isSelectable() {
+                return this.$parent.total > 0;
+            },
+            loadingColor() {
+                return getComputedStyle(document.documentElement).getPropertyValue('--primary');
+            },
+            isSelected: {
+                get() {
+                    return (this.$parent.selection && this.$parent.selection.indexOf(this.$parent.item) > -1);
+                },
+                set(newVal) {
+                		if (this.$parent.selection && this.$parent.selection.indexOf(this.$parent.item) > -1) {
+                		    if (!newVal) {
+                		        this.$parent.selection.splice(this.$parent.selection.indexOf(this.$parent.item),1);
+                		    }
+                		}
+                		else {
+                		    if (newVal) {
+                		        this.$parent.selection.push(this.$parent.item);
+                		    }
+                		}
+                },
+            },
+            showImg() {
+                if (this.loading) {
+                    return "display:none";
+                }
+                return "";
+            },
             /**
              * Get the right embed URL.
              */
@@ -55,6 +102,7 @@
              */
             isVisible() {
                 if (this.$parent.overlayVisibility !== undefined && this.$parent.overlayVisibility !== false) {
+                    this.loading = true;
                     return true;
                 }
 
@@ -74,6 +122,9 @@
 
                 // add class only if overlay should be visible
                 if (this.isVisible && ! body.classList.contains('silentbox-is-opened')) {
+                    this.$nextTick(() => {
+                        this.$refs.mediaElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    });
                     return body.classList.add('silentbox-is-opened');
                 }
 
@@ -86,6 +137,11 @@
              * Move to next item.
              */
             moveToNextItem() {
+                if (this.loading) {
+                    this.imgLoad.off('always',this.imgsLoaded);
+                    this.imgLoad = null;
+                }
+                this.loading = true;
                 this.$parent.nextItem();
             },
             /**
@@ -93,7 +149,16 @@
              */
             moveToPreviousItem()
             {
+                if (this.loading) {
+                    this.imgLoad.off('always',this.imgsLoaded);
+                    this.imgLoad = null;
+                }
+                this.loading = true;
                 this.$parent.prevItem();
+            },
+            stopTheEvent(event)
+            {
+                event.stopPropagation();
             },
             /**
              * Hide silentbox overlay.
@@ -163,6 +228,17 @@
 
                     return videoUrl;
             },
+		        imgsLoaded() {
+                this.loading = false;
+                this.imgLoad.off('always',this.imgsLoaded);
+                this.imgLoad = null;
+		        },
+        },
+        updated() {
+            if ((this.$refs.mediaContainer) && (!this.imgLoad) && (this.loading)) {
+                this.imgLoad = imagesLoaded(this.$refs.mediaContainer);
+                this.imgLoad.on('always',this.imgsLoaded);
+            }
         }
     }
 </script>

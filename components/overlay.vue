@@ -20,9 +20,9 @@
                     type="checkbox"
                     aria-label="..."
                     v-model="isSelected"
-                    :disabled="(this.$parent.selection.length >= this.$parent.total) && (this.$parent.selection.indexOf(this.$parent.item) == -1)"
+                    :disabled="(this.$parent.total!=999999) && (this.$parent.selection.length >= this.$parent.total) && (this.$parent.selection.indexOf(this.$parent.item) == -1)"
                 >
-                <span>Add to selection <strong>({{this.$parent.selection.length}}/{{this.$parent.total}})</strong></span>
+                <span>Add to selection <strong v-if="this.$parent.total!=999999">({{this.$parent.selection.length}}/{{this.$parent.total}})</strong></span>
                 
                 </b-checkbox>
                 </div>

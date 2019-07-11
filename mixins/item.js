@@ -9,9 +9,9 @@ export default {
                 
                 return 'https://img.youtube.com/vi/' + videoId + '/hqdefault.jpg';
             } else if (src.includes('vimeo.com')) {
-                let videoDetails = this.httpGet('https://vimeo.com/api/v2/video/54802209.json');
+                //let videoDetails = this.httpGet('https://vimeo.com/api/v2/video/54802209.json');
 
-                return videoDetails[0].thumbnail_medium;
+                return 'https://i.vimeocdn.com/video/'; //videoDetails[0].thumbnail_medium;
             } else {
                 return src;
             }

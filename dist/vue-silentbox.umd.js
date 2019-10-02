@@ -825,9 +825,12 @@
             mixins: [ VideoUrlDecoderMixin ],
             data: function data() {
                 return {
-                    video: false,
-                    loading: false,
-                    imgLoad: null
+                    video0: false,
+                    video1: false,
+                    video2: false,
+                    imgLoad0: null,
+                    imgLoad1: null,
+                    imgLoad2: null,
                 }
             },
             computed: {
@@ -854,17 +857,59 @@
                     		}
                     },
                 },
-                showImg: function showImg() {
-                    if (this.loading) {
-                        return "display:none";
+                showImg0: function showImg0() {
+                    return "justify-content:center;display:flex;flex-direction:column;position:absolute;width:100%;height:100%;" + this.$parent.img[0];
+                },
+                showImg1: function showImg1() {
+                    return "justify-content:center;display:flex;flex-direction:column;position:absolute;width:100%;height:100%;" + this.$parent.img[1];
+                },
+                showImg2: function showImg2() {
+                    return "justify-content:center;display:flex;flex-direction:column;position:absolute;width:100%;height:100%;" + this.$parent.img[2];
+                },
+                displayImg0: function displayImg0() {
+                    if (this.getLoading0) {
+                        return "display:none;";
                     }
                     return "";
+                },
+                displayImg1: function displayImg1() {
+                    if (this.getLoading1) {
+                        return "display:none;";
+                    }
+                    return "";
+                },
+                displayImg2: function displayImg2() {
+                    if (this.getLoading2) {
+                        return "display:none;";
+                    }
+                    return "";
+                },
+                getLoading0: function getLoading0() {
+                    return this.$parent.loading[0];
+                },
+                getLoading1: function getLoading1() {
+                    return this.$parent.loading[1];
+                },
+                getLoading2: function getLoading2() {
+                    return this.$parent.loading[2];
                 },
                 /**
                  * Get the right embed URL.
                  */
-                getEmbedUrl: function getEmbedUrl() {
-                    return this.handleUrl(this.$parent.embedUrl);
+                getEmbedUrl0: function getEmbedUrl0() {
+                    return this.handleUrl(this.$parent.embedUrl[0],0);
+                },
+                /**
+                 * Get the right embed URL.
+                 */
+                getEmbedUrl1: function getEmbedUrl1() {
+                    return this.handleUrl(this.$parent.embedUrl[1],1);
+                },
+                /**
+                 * Get the right embed URL.
+                 */
+                getEmbedUrl2: function getEmbedUrl2() {
+                    return this.handleUrl(this.$parent.embedUrl[2],2);
                 },
                 /**
                  * Get autoplay state.
@@ -880,7 +925,7 @@
                  */
                 isVisible: function isVisible() {
                     if (this.$parent.overlayVisibility !== undefined && this.$parent.overlayVisibility !== false) {
-                        this.loading = true;
+                        this.$parent.setLoadingAll();
                         return true;
                     }
 
@@ -903,7 +948,11 @@
                     // add class only if overlay should be visible
                     if (this.isVisible && ! body.classList.contains('silentbox-is-opened')) {
                         this.$nextTick(function () {
-                            this$1.$refs.mediaElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            switch (this$1.curr) {
+                            	case 0: this$1.$refs.mediaElement0.scrollIntoView({ behavior: 'smooth', block: 'center' }); break;
+                            	case 1: this$1.$refs.mediaElement1.scrollIntoView({ behavior: 'smooth', block: 'center' }); break;
+                            	case 2: this$1.$refs.mediaElement2.scrollIntoView({ behavior: 'smooth', block: 'center' }); break;
+                            }
                         });
                         return body.classList.add('silentbox-is-opened');
                     }
@@ -917,11 +966,23 @@
                  * Move to next item.
                  */
                 moveToNextItem: function moveToNextItem() {
-                    if (this.loading) {
+                    if (this.$parent.loading[0]) {
+                        this.imgLoad0.off('always',this.imgsLoaded0);
+                        this.imgLoad0 = null;
+                    }
+                    if (this.$parent.loading[1]) {
+                        this.imgLoad1.off('always',this.imgsLoaded1);
+                        this.imgLoad1 = null;
+                    }
+                    if (this.$parent.loading[2]) {
+                        this.imgLoad2.off('always',this.imgsLoaded2);
+                        this.imgLoad2 = null;
+                    }
+    /*                if (this.loading) {
                         this.imgLoad.off('always',this.imgsLoaded);
                         this.imgLoad = null;
                     }
-                    this.loading = true;
+                    this.loading = true;*/
                     this.$parent.nextItem();
                 },
                 /**
@@ -929,11 +990,19 @@
                  */
                 moveToPreviousItem: function moveToPreviousItem()
                 {
-                    if (this.loading) {
-                        this.imgLoad.off('always',this.imgsLoaded);
-                        this.imgLoad = null;
+                    if (this.$parent.loading[0]) {
+                        this.imgLoad0.off('always',this.imgsLoaded0);
+                        this.imgLoad0 = null;
                     }
-                    this.loading = true;
+                    if (this.$parent.loading[1]) {
+                        this.imgLoad1.off('always',this.imgsLoaded1);
+                        this.imgLoad1 = null;
+                    }
+                    if (this.$parent.loading[2]) {
+                        this.imgLoad2.off('always',this.imgsLoaded2);
+                        this.imgLoad2 = null;
+                    }
+    //                this.loading = true;
                     this.$parent.prevItem();
                 },
                 stopTheEvent: function stopTheEvent(event)
@@ -953,17 +1022,14 @@
                  * @param  {string} url
                  * @return {string}
                  */
-                handleUrl: function handleUrl(url) {
+                handleUrl: function handleUrl(url,position) {
                     if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                        this.video = true;
-                        return this.getYoutubeVideo(url);
+                        switch (position) { case 0: this.video0 = true; break; case 1: this.video1 = true; break; case 2: this.video2 = true; break; }                    return this.getYoutubeVideo(url);
                     } else if (url.includes("vimeo")) {
-                        this.video = true;
-                        return this.getVimeoVideo(url);
+                        switch (position) { case 0: this.video0 = true; break; case 1: this.video1 = true; break; case 2: this.video2 = true; break; }                    return this.getVimeoVideo(url);
                     } else {
                         // Given url is not a video URL thus return it as it is.
-                        this.video = false;
-                        return url;
+                        switch (position) { case 0: this.video0 = false; break; case 1: this.video1 = false; break; case 2: this.video2 = false; break; }                    return url;
                     }
                 },
                 /**
@@ -1008,16 +1074,34 @@
 
                         return videoUrl;
                 },
-    		        imgsLoaded: function imgsLoaded() {
-                    this.loading = false;
-                    this.imgLoad.off('always',this.imgsLoaded);
-                    this.imgLoad = null;
+    		        imgsLoaded0: function imgsLoaded0() {
+                    this.$parent.setLoading(false,0);
+                    this.imgLoad0.off('always',this.imgsLoaded0);
+                    this.imgLoad0 = null;
+    		        },
+    		        imgsLoaded1: function imgsLoaded1() {
+                    this.$parent.setLoading(false,1);
+                    this.imgLoad1.off('always',this.imgsLoaded1);
+                    this.imgLoad1 = null;
+    		        },
+    		        imgsLoaded2: function imgsLoaded2() {
+                    this.$parent.setLoading(false,2);
+                    this.imgLoad2.off('always',this.imgsLoaded2);
+                    this.imgLoad2 = null;
     		        },
             },
             updated: function updated() {
-                if ((this.$refs.mediaContainer) && (!this.imgLoad) && (this.loading)) {
-                    this.imgLoad = imagesloaded(this.$refs.mediaContainer);
-                    this.imgLoad.on('always',this.imgsLoaded);
+                if ((this.$refs.mediaElement0) && (!this.imgLoad0) && (this.$parent.loading[0])) {
+                    this.imgLoad0 = imagesloaded(this.$refs.mediaElement0);
+                    this.imgLoad0.on('always',this.imgsLoaded0);
+                }
+                if ((this.$refs.mediaElement1) && (!this.imgLoad1) && (this.$parent.loading[1])) {
+                    this.imgLoad1 = imagesloaded(this.$refs.mediaElement1);
+                    this.imgLoad1.on('always',this.imgsLoaded1);
+                }
+                if ((this.$refs.mediaElement2) && (!this.imgLoad2) && (this.$parent.loading[2])) {
+                    this.imgLoad2 = imagesloaded(this.$refs.mediaElement2);
+                    this.imgLoad2.on('always',this.imgsLoaded2);
                 }
             }
         };
@@ -1062,44 +1146,128 @@
                       attrs: { id: "silentbox-overlay__container" }
                     },
                     [
-                      _vm.loading
-                        ? _c(
-                            "main",
-                            { staticClass: "empty-state" },
-                            [
-                              _c("beat-loader", {
-                                attrs: { color: _vm.loadingColor, size: "15px" }
-                              })
-                            ],
-                            1
-                          )
-                        : _vm._e(),
+                      _c("div", { ref: "mediaElement0", style: _vm.showImg0 }, [
+                        _vm.getLoading0
+                          ? _c(
+                              "main",
+                              { staticClass: "empty-state" },
+                              [
+                                _c("beat-loader", {
+                                  attrs: { color: _vm.loadingColor, size: "15px" }
+                                })
+                              ],
+                              1
+                            )
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.video0
+                          ? _c("iframe", {
+                              ref: "mediaElement0",
+                              style: _vm.displayImg0,
+                              attrs: {
+                                width: "100%",
+                                height: "100%",
+                                src: _vm.getEmbedUrl0,
+                                frameborder: "0",
+                                allow: _vm.getAutoplayState,
+                                allowfullscreen: ""
+                              }
+                            })
+                          : _vm._e(),
+                        _vm._v(" "),
+                        !_vm.video0
+                          ? _c("img", {
+                              style: _vm.displayImg0,
+                              attrs: {
+                                width: "auto",
+                                height: "auto",
+                                src: _vm.getEmbedUrl0
+                              }
+                            })
+                          : _vm._e()
+                      ]),
                       _vm._v(" "),
-                      _vm.video
-                        ? _c("iframe", {
-                            ref: "mediaElement",
-                            attrs: {
-                              width: "100%",
-                              height: "100%",
-                              src: _vm.getEmbedUrl,
-                              frameborder: "0",
-                              allow: _vm.getAutoplayState,
-                              allowfullscreen: ""
-                            }
-                          })
-                        : _vm._e(),
+                      _c("div", { ref: "mediaElement1", style: _vm.showImg1 }, [
+                        _vm.getLoading1
+                          ? _c(
+                              "main",
+                              { staticClass: "empty-state" },
+                              [
+                                _c("beat-loader", {
+                                  attrs: { color: _vm.loadingColor, size: "15px" }
+                                })
+                              ],
+                              1
+                            )
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.video1
+                          ? _c("iframe", {
+                              ref: "mediaElement0",
+                              style: _vm.displayImg1,
+                              attrs: {
+                                width: "100%",
+                                height: "100%",
+                                src: _vm.getEmbedUrl1,
+                                frameborder: "0",
+                                allow: _vm.getAutoplayState,
+                                allowfullscreen: ""
+                              }
+                            })
+                          : _vm._e(),
+                        _vm._v(" "),
+                        !_vm.video1
+                          ? _c("img", {
+                              style: _vm.displayImg1,
+                              attrs: {
+                                width: "auto",
+                                height: "auto",
+                                src: _vm.getEmbedUrl1
+                              }
+                            })
+                          : _vm._e()
+                      ]),
                       _vm._v(" "),
-                      !_vm.video
-                        ? _c("img", {
-                            ref: "mediaElement",
-                            style: _vm.showImg,
-                            attrs: {
-                              width: "auto",
-                              height: "auto",
-                              src: _vm.getEmbedUrl
-                            }
-                          })
-                        : _vm._e()
+                      _c("div", { ref: "mediaElement2", style: _vm.showImg2 }, [
+                        _vm.getLoading2
+                          ? _c(
+                              "main",
+                              { staticClass: "empty-state" },
+                              [
+                                _c("beat-loader", {
+                                  attrs: { color: _vm.loadingColor, size: "15px" }
+                                })
+                              ],
+                              1
+                            )
+                          : _vm._e(),
+                        _vm._v(" "),
+                        _vm.video2
+                          ? _c("iframe", {
+                              ref: "mediaElement0",
+                              style: _vm.displayImg2,
+                              attrs: {
+                                width: "100%",
+                                height: "100%",
+                                src: _vm.getEmbedUrl2,
+                                frameborder: "0",
+                                allow: _vm.getAutoplayState,
+                                allowfullscreen: ""
+                              }
+                            })
+                          : _vm._e(),
+                        _vm._v(" "),
+                        !_vm.video2
+                          ? _c("img", {
+                              style: _vm.displayImg2,
+                              attrs: {
+                                width: "auto",
+                                height: "auto",
+                                src: _vm.getEmbedUrl2
+                              }
+                            })
+                          : _vm._e()
+                      ])
                     ]
                   ),
                   _vm._v(" "),
@@ -1244,7 +1412,7 @@
       /* style */
       var __vue_inject_styles__$1 = function (inject) {
         if (!inject) { return }
-        inject("data-v-5553f09c_0", { source: ".silentbox-is-opened {\n  overflow: hidden;\n}\n#silentbox-overlay {\n  display: block;\n  height: 100vh;\n  left: 0;\n  position: fixed;\n  top: 0;\n  width: 100vw;\n  z-index: 999;\n}\n#silentbox-overlay__background {\n  background: rgba(0, 0, 0, 0.75);\n  backdrop-filter: blur(20px);\n  cursor: default;\n  display: block;\n  height: 100%;\n  left: 0;\n  position: absolute;\n  top: 0;\n  width: 100%;\n}\n#silentbox-overlay__content {\n  cursor: default;\n  display: block;\n  height: 100%;\n  position: relative;\n  width: 100%;\n}\n#silentbox-overlay__embed {\n  bottom: 0;\n  cursor: default;\n  display: block;\n  height: 80%;\n  left: 0;\n  margin: auto;\n  position: absolute;\n  right: 0;\n  top: -2.5rem;\n  width: 75%;\n}\n#silentbox-overlay__embed img,\n#silentbox-overlay__embed iframe {\n  background-color: #000;\n  bottom: 0;\n  box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.45);\n  cursor: default;\n  display: block;\n  left: 0;\n  margin: auto;\n  max-height: 100%;\n  max-width: 100%;\n  position: absolute;\n  right: 0;\n  top: 0;\n}\n#silentbox-overlay__container {\n  cursor: default;\n  height: 100%;\n  margin: 0 0 1.5rem 0;\n  position: relative;\n  text-align: center;\n  width: 100%;\n}\n#silentbox-overlay__description {\n  display: block;\n  padding-top: 1rem;\n  text-align: center;\n  color: #fff;\n}\n#silentbox-overlay__close-button {\n  background: rgba(0, 0, 0, 0);\n  border: none;\n  color: #fff;\n  cursor: pointer;\n  height: 2.5rem;\n  position: absolute;\n  right: 0;\n  top: 0;\n  transition: background-color 250ms ease-out;\n  width: 2.5rem;\n}\n#silentbox-overlay__close-button:hover, #silentbox-overlay__close-button:focus {\n  background-color: rgba(0, 0, 0, 0.5);\n  outline: none;\n}\n#silentbox-overlay__close-button .icon {\n  color: #fff;\n  cursor: pointer;\n  height: 1rem;\n  left: 0.7rem;\n  margin: 50% 50% 0 0;\n  position: absolute;\n  right: 0px;\n  top: -0.5rem;\n  transition: 250ms ease;\n  width: 1rem;\n}\n#silentbox-overlay__close-button .icon:before, #silentbox-overlay__close-button .icon:after {\n  background: #fff;\n  content: \"\";\n  height: 2px;\n  left: 5%;\n  position: absolute;\n  top: 50%;\n  transition: 250ms ease;\n  width: 100%;\n}\n#silentbox-overlay__close-button .icon:before {\n  transform: rotate(-45deg);\n}\n#silentbox-overlay__close-button .icon:after {\n  transform: rotate(45deg);\n}\n#silentbox-overlay__close-button .icon:hover:before, #silentbox-overlay__close-button .icon:hover:after, #silentbox-overlay__close-button .icon:focus:before, #silentbox-overlay__close-button .icon:focus:after {\n  background: #58e8d2;\n  left: 25%;\n  width: 50%;\n}\n#silentbox-overlay__arrow-buttons .arrow {\n  border-left: 2px solid #fff;\n  border-top: 2px solid #fff;\n  cursor: pointer;\n  height: 1.5rem;\n  position: absolute;\n  width: 1.5rem;\n}\n#silentbox-overlay__arrow-buttons .arrow:hover, #silentbox-overlay__arrow-buttons .arrow:focus {\n  outline: none;\n  border-color: #58e8d2;\n}\n#silentbox-overlay__arrow-buttons .arrow-previous {\n  left: 2rem;\n  top: 50%;\n  transform: rotate(-45deg);\n}\n#silentbox-overlay__arrow-buttons .arrow-previous:hover, #silentbox-overlay__arrow-buttons .arrow-previous:focus {\n  animation-duration: 1s;\n  animation-iteration-count: infinite;\n  animation-name: pulsingPrevious;\n}\n#silentbox-overlay__arrow-buttons .arrow-next {\n  right: 2rem;\n  top: 50%;\n  transform: rotate(135deg);\n}\n#silentbox-overlay__arrow-buttons .arrow-next:hover, #silentbox-overlay__arrow-buttons .arrow-next:focus {\n  animation-duration: 1s;\n  animation-iteration-count: infinite;\n  animation-name: pulsingNext;\n}\n@keyframes pulsingNext {\n0% {\n    animation-timing-function: ease-in;\n    right: 2rem;\n}\n25% {\n    animation-timing-function: ease-in;\n    right: 1.75rem;\n}\n75% {\n    animation-timing-function: ease-in;\n    right: 2.25rem;\n}\n100% {\n    animation-timing-function: ease-in;\n    right: 2rem;\n}\n}\n@keyframes pulsingPrevious {\n0% {\n    animation-timing-function: ease-in;\n    left: 2rem;\n}\n25% {\n    animation-timing-function: ease-in;\n    left: 1.75rem;\n}\n75% {\n    animation-timing-function: ease-in;\n    left: 2.25rem;\n}\n100% {\n    animation-timing-function: ease-in;\n    left: 2rem;\n}\n}\n\n/*# sourceMappingURL=overlay.vue.map */", map: {"version":3,"sources":["/home/gfrymer/blink/silentbox/components/overlay.vue","overlay.vue"],"names":[],"mappings":"AAmQA;EACA,gBAAA;AClQA;ADqQA;EACA,cAAA;EACA,aAAA;EACA,OAAA;EACA,eAAA;EACA,MAAA;EACA,YAAA;EACA,YAAA;AClQA;AD6OA;EAwBA,+BAAA;EACA,2BAAA;EACA,eAAA;EACA,cAAA;EACA,YAAA;EACA,OAAA;EACA,kBAAA;EACA,MAAA;EACA,WAAA;AClQA;ADkOA;EAoCA,eAAA;EACA,cAAA;EACA,YAAA;EACA,kBAAA;EACA,WAAA;ACnQA;AD2NA;EA4CA,SAAA;EACA,eAAA;EACA,cAAA;EACA,WAAA;EACA,OAAA;EACA,YAAA;EACA,kBAAA;EACA,QAAA;EACA,YAAA;EACA,UAAA;ACpQA;ADsQA;;EAEA,sBAjDA;EAkDA,SAAA;EACA,0CAAA;EACA,eAAA;EACA,cAAA;EACA,OAAA;EACA,YAAA;EACA,gBAAA;EACA,eAAA;EACA,kBAAA;EACA,QAAA;EACA,MAAA;ACpQA;ADgMA;EAyEA,eAAA;EACA,YAAA;EACA,oBAAA;EACA,kBAAA;EACA,kBAAA;EACA,WAAA;ACtQA;ADwLA;EAkFA,cAAA;EACA,iBAAA;EACA,kBAAA;EACA,WA/EA;ACxLA;ADkLA;EAyFA,4BAAA;EACA,YAAA;EACA,WArFA;EAsFA,eAAA;EACA,cAAA;EACA,kBAAA;EACA,QAAA;EACA,MAAA;EACA,2CAAA;EACA,aAAA;ACxQA;ADyQA;EAEA,oCAAA;EACA,aAAA;ACxQA;AD2QA;EACA,WApGA;EAqGA,eAAA;EACA,YAAA;EACA,YAAA;EACA,mBAAA;EACA,kBAAA;EACA,UAAA;EACA,YAAA;EACA,sBAAA;EACA,WAAA;ACzQA;AD0QA;EAEA,gBAhHA;EAiHA,WAAA;EACA,WAAA;EACA,QAAA;EACA,kBAAA;EACA,QAAA;EACA,sBAAA;EACA,WAAA;ACzQA;AD2QA;EACA,yBAAA;ACzQA;AD2QA;EACA,wBAAA;ACzQA;AD6QA;EAEA,mBAlIA;EAmIA,SAAA;EACA,UAAA;AC5QA;ADmRA;EACA,2BAAA;EACA,0BAAA;EACA,eAAA;EACA,cAAA;EACA,kBAAA;EACA,aAAA;ACjRA;ADkRA;EAEA,aAAA;EACA,qBArJA;AC5HA;ADoRA;EACA,UAAA;EACA,QAAA;EACA,yBAAA;AClRA;ADmRA;EAEA,sBAAA;EACA,mCAAA;EACA,+BAAA;AClRA;ADqRA;EACA,WAAA;EACA,QAAA;EACA,yBAAA;ACnRA;ADoRA;EAEA,sBAAA;EACA,mCAAA;EACA,2BAAA;ACnRA;AD0RA;AACA;IACA,kCAAA;IACA,WAAA;ACvRE;ADyRF;IACA,kCAAA;IACA,cAAA;ACvRE;ADyRF;IACA,kCAAA;IACA,cAAA;ACvRE;ADyRF;IACA,kCAAA;IACA,WAAA;ACvRE;AACF;ADyRA;AACA;IACA,kCAAA;IACA,UAAA;ACvRE;ADyRF;IACA,kCAAA;IACA,aAAA;ACvRE;ADyRF;IACA,kCAAA;IACA,aAAA;ACvRE;ADyRF;IACA,kCAAA;IACA,UAAA;ACvRE;AACF;;AAEA,sCAAsC","file":"overlay.vue","sourcesContent":["<template>\r\n    <div id=\"silentbox-overlay\" v-if=\"isVisible\">\r\n        <div id=\"silentbox-overlay__background\" @click.stop=\"closeSilentboxOverlay\"></div>\r\n\r\n        <div id=\"silentbox-overlay__content\" @click.stop=\"closeSilentboxOverlay\">\r\n            <div id=\"silentbox-overlay__embed\">\r\n                <div ref=\"mediaContainer\" id=\"silentbox-overlay__container\">\r\n\t\t                <main class=\"empty-state\" v-if=\"loading\">\r\n\t\t                    <beat-loader :color=\"loadingColor\" size=\"15px\"></beat-loader>\r\n\t\t                </main>\r\n                    <iframe ref=\"mediaElement\" width=\"100%\" height=\"100%\" v-if=\"video\" :src=\"getEmbedUrl\" frameborder=\"0\" :allow=\"getAutoplayState\" allowfullscreen></iframe>\r\n                    <img :style=\"showImg\" ref=\"mediaElement\" width=\"auto\" height=\"auto\" :src=\"getEmbedUrl\" v-if=\"! video\">\r\n                </div>\r\n\r\n                <p id=\"silentbox-overlay__description\" v-if=\"this.$parent.description\">{{ this.$parent.description }}</p>\r\n                <div class=\"add-to-collection-fullscreen-gallery\" @click.stop=\"stopTheEvent\" v-if=\"isSelectable\">\r\n                <b-checkbox\r\n                    class=\"form-check-input\"\r\n                    :id=\"`overlayAssetSelector${this.$parent.item.id}`\"\r\n                    type=\"checkbox\"\r\n                    aria-label=\"...\"\r\n                    v-model=\"isSelected\"\r\n                    :disabled=\"(this.$parent.total!=999999) && (this.$parent.selection.length >= this.$parent.total) && (this.$parent.selection.indexOf(this.$parent.item) == -1)\"\r\n                >\r\n                <span>Add to selection <strong v-if=\"this.$parent.total!=999999\">({{this.$parent.selection.length}}/{{this.$parent.total}})</strong></span>\r\n                \r\n                </b-checkbox>\r\n                </div>\r\n            </div>\r\n        </div>\r\n\r\n        <div id=\"silentbox-overlay__close-button\" role=\"button\" tabindex=\"3\" @click.stop=\"closeSilentboxOverlay\" @keyup.enter=\"closeSilentboxOverlay\">\r\n            <div class=\"icon\"></div>\r\n        </div>\r\n\r\n        <div id=\"silentbox-overlay__arrow-buttons\" v-if=\"this.$parent.items.total > 0\">\r\n            <div class=\"arrow arrow-previous\" role=\"button\" tabindex=\"2\" @click=\"moveToPreviousItem\" @keyup.enter=\"moveToPreviousItem\"></div>\r\n            <div class=\"arrow arrow-next\" role=\"button\" tabindex=\"1\" @click=\"moveToNextItem\" @keyup.enter=\"moveToNextItem\"></div>\r\n        </div>\r\n    </div>\r\n</template>\r\n\r\n<script>\r\n    import VideoUrlDecoderMixin from './../mixins/videoUrlDecoder';\r\n    import imagesLoaded from 'imagesloaded';\r\n\r\n    export default {\r\n        name: 'SilentboxOverlay',\r\n        mixins: [ VideoUrlDecoderMixin ],\r\n        data() {\r\n            return {\r\n                video: false,\r\n                loading: false,\r\n                imgLoad: null\r\n            }\r\n        },\r\n        computed: {\r\n            isSelectable() {\r\n                return this.$parent.total > 0;\r\n            },\r\n            loadingColor() {\r\n                return getComputedStyle(document.documentElement).getPropertyValue('--white');\r\n            },\r\n            isSelected: {\r\n                get() {\r\n                    return (this.$parent.selection && this.$parent.selection.indexOf(this.$parent.item) > -1);\r\n                },\r\n                set(newVal) {\r\n                \t\tif (this.$parent.selection && this.$parent.selection.indexOf(this.$parent.item) > -1) {\r\n                \t\t    if (!newVal) {\r\n                \t\t        this.$parent.selection.splice(this.$parent.selection.indexOf(this.$parent.item),1);\r\n                \t\t    }\r\n                \t\t}\r\n                \t\telse {\r\n                \t\t    if (newVal) {\r\n                \t\t        this.$parent.selection.push(this.$parent.item);\r\n                \t\t    }\r\n                \t\t}\r\n                },\r\n            },\r\n            showImg() {\r\n                if (this.loading) {\r\n                    return \"display:none\";\r\n                }\r\n                return \"\";\r\n            },\r\n            /**\r\n             * Get the right embed URL.\r\n             */\r\n            getEmbedUrl() {\r\n                return this.handleUrl(this.$parent.embedUrl);\r\n            },\r\n            /**\r\n             * Get autoplay state.\r\n             */\r\n            getAutoplayState() {\r\n                if (this.$parent.autoplay !== undefined && this.$parent.autoplay !== false) {\r\n                    return \"autoplay\";\r\n                }\r\n                 return \"\";\r\n            },\r\n            /**\r\n             * Check whether overlay is visible or not.\r\n             */\r\n            isVisible() {\r\n                if (this.$parent.overlayVisibility !== undefined && this.$parent.overlayVisibility !== false) {\r\n                    this.loading = true;\r\n                    return true;\r\n                }\r\n\r\n                return false;\r\n            }\r\n        },\r\n        watch: {\r\n            isVisible: function (value) {\r\n                if (document !== undefined) {\r\n                    this.bodyScrolling();\r\n                }\r\n            }\r\n        },\r\n        methods: {\r\n            bodyScrolling() {\r\n                let body = document.body;\r\n\r\n                // add class only if overlay should be visible\r\n                if (this.isVisible && ! body.classList.contains('silentbox-is-opened')) {\r\n                    this.$nextTick(() => {\r\n                        this.$refs.mediaElement.scrollIntoView({ behavior: 'smooth', block: 'center' });\r\n                    });\r\n                    return body.classList.add('silentbox-is-opened');\r\n                }\r\n\r\n                // remove class only if overlay should be hidden\r\n                if (! this.isVisible && body.classList.contains('silentbox-is-opened')) {\r\n                    return body.classList.remove('silentbox-is-opened')\r\n                }\r\n            },\r\n            /**\r\n             * Move to next item.\r\n             */\r\n            moveToNextItem() {\r\n                if (this.loading) {\r\n                    this.imgLoad.off('always',this.imgsLoaded);\r\n                    this.imgLoad = null;\r\n                }\r\n                this.loading = true;\r\n                this.$parent.nextItem();\r\n            },\r\n            /**\r\n             * Move to previous item.\r\n             */\r\n            moveToPreviousItem()\r\n            {\r\n                if (this.loading) {\r\n                    this.imgLoad.off('always',this.imgsLoaded);\r\n                    this.imgLoad = null;\r\n                }\r\n                this.loading = true;\r\n                this.$parent.prevItem();\r\n            },\r\n            stopTheEvent(event)\r\n            {\r\n                event.stopPropagation();\r\n            },\r\n            /**\r\n             * Hide silentbox overlay.\r\n             */\r\n            closeSilentboxOverlay() {\r\n                this.$parent.$emit('closeSilentboxOverlay');\r\n            },\r\n            /**\r\n             * Search for known video services URLs and return their players if recognized.\r\n             * Unrecognized URLs are handled as images.\r\n             * \r\n             * @param  {string} url\r\n             * @return {string}\r\n             */\r\n            handleUrl(url) {\r\n                if (url.includes('youtube.com') || url.includes('youtu.be')) {\r\n                    this.video = true;\r\n                    return this.getYoutubeVideo(url);\r\n                } else if (url.includes(\"vimeo\")) {\r\n                    this.video = true;\r\n                    return this.getVimeoVideo(url);\r\n                } else {\r\n                    // Given url is not a video URL thus return it as it is.\r\n                    this.video = false;\r\n                    return url;\r\n                }\r\n            },\r\n            /**\r\n             * Get embed URL for youtube.com\r\n             * \r\n             * @param  {string} url \r\n             * @return {string} \r\n             */\r\n            getYoutubeVideo(url) {\r\n                let videoUrl = \"\";\r\n                let videoId  = this.getYoutubeVideoId(url);\r\n\r\n                if (videoId) {\r\n                    videoUrl = 'https://www.youtube.com/embed/' + videoId + '?rel=0';\r\n\r\n                    if (this.$parent.autoplay) {\r\n                        videoUrl += '&amp;autoplay=1';\r\n                    }\r\n                    if (this.$parent.showControls) {\r\n                        videoUrl += '&amp;controls=0';\r\n                    }\r\n                }\r\n\r\n                return videoUrl;\r\n            },\r\n            /**\r\n             * Get embed URL for vimeo.com\r\n             * \r\n             * @param  {string} url \r\n             * @return {string} \r\n             */\r\n            getVimeoVideo(url) {          \r\n                    let videoUrl = \"\";\r\n                    const vimoId = /(vimeo(pro)?\\.com)\\/(?:[^\\d]+)?(\\d+)\\??(.*)?$/.exec(url)[3];\r\n\r\n                    if (vimoId !== undefined) {\r\n                        videoUrl = 'https://player.vimeo.com/video/'+ vimoId + '?api=1';\r\n                        if (this.$parent.autoplay) {\r\n                            videoUrl += '&autoplay=1';\r\n                        }\r\n                    }\r\n\r\n                    return videoUrl;\r\n            },\r\n\t\t        imgsLoaded() {\r\n                this.loading = false;\r\n                this.imgLoad.off('always',this.imgsLoaded);\r\n                this.imgLoad = null;\r\n\t\t        },\r\n        },\r\n        updated() {\r\n            if ((this.$refs.mediaContainer) && (!this.imgLoad) && (this.loading)) {\r\n                this.imgLoad = imagesLoaded(this.$refs.mediaContainer);\r\n                this.imgLoad.on('always',this.imgsLoaded);\r\n            }\r\n        }\r\n    }\r\n</script>\r\n\r\n<style lang=\"scss\">\r\n@mixin element($element) {\r\n    &__#{$element} {\r\n        @content;\r\n    }\r\n}\r\n\r\n// Colours used in silentbox\r\n$main:   #fff;\r\n$accent: #58e8d2;\r\n$bg: #000;\r\n\r\n.silentbox-is-opened {\r\n    overflow: hidden;\r\n}\r\n\r\n#silentbox-overlay {\r\n    display: block;\r\n    height: 100vh;\r\n    left: 0;\r\n    position: fixed;\r\n    top: 0;\r\n    width: 100vw;\r\n    z-index: 999;\r\n\r\n    @include element(background) {\r\n        background: rgba($bg, .75);\r\n        backdrop-filter: blur(20px);\r\n        cursor: default;\r\n        display: block;\r\n        height: 100%;\r\n        left: 0;\r\n        position: absolute;\r\n        top: 0;\r\n        width: 100%;\r\n    }\r\n\r\n    @include element(content) {\r\n        cursor: default;\r\n        display: block;\r\n        height: 100%;\r\n        position: relative;\r\n        width: 100%;\r\n    }\r\n\r\n    @include element(embed) {\r\n        bottom: 0;\r\n        cursor: default;\r\n        display: block;\r\n        height: 80%;\r\n        left: 0;\r\n        margin: auto;\r\n        position: absolute;\r\n        right: 0;\r\n        top: -2.5rem;\r\n        width: 75%;\r\n\r\n        img,\r\n        iframe {\r\n            background-color: $bg;\r\n            bottom: 0;\r\n            box-shadow: 0 0 1.5rem rgba($bg, .45);\r\n            cursor: default;\r\n            display: block;\r\n            left: 0;\r\n            margin: auto;\r\n            max-height: 100%;\r\n            max-width: 100%;\r\n            position: absolute;\r\n            right: 0;\r\n            top: 0;\r\n        }\r\n    }\r\n\r\n    @include element(container) {\r\n        cursor: default;\r\n        height: 100%;\r\n        margin: 0 0 1.5rem 0;\r\n        position: relative;\r\n        text-align: center;\r\n        width: 100%;\r\n    }\r\n\r\n    @include element(description) {\r\n        display: block;\r\n        padding-top: 1rem;\r\n        text-align: center;\r\n        color: $main;\r\n    }\r\n\r\n    @include element(close-button) {\r\n        background: rgba($bg, .0);\r\n        border: none;\r\n        color: $main;\r\n        cursor: pointer;\r\n        height: 2.5rem;\r\n        position: absolute;\r\n        right: 0;\r\n        top: 0;\r\n        transition: background-color 250ms ease-out;\r\n        width: 2.5rem;\r\n        &:hover,\r\n        &:focus {\r\n            background-color: rgba($bg, .5);\r\n            outline: none;\r\n        }\r\n\r\n        .icon {\r\n            color: $main;\r\n            cursor: pointer;\r\n            height: 1rem;\r\n            left: .7rem;\r\n            margin: 50% 50% 0 0;\r\n            position: absolute;\r\n            right: 0px;\r\n            top: -.5rem;\r\n            transition: 250ms ease;\r\n            width: 1rem;\r\n            &:before,\r\n            &:after {\r\n                background: $main;\r\n                content: \"\";\r\n                height: 2px;\r\n                left: 5%;\r\n                position: absolute;\r\n                top: 50%;\r\n                transition: 250ms ease;\r\n                width: 100%;\r\n            }\r\n            &:before {\r\n                transform: rotate(-45deg);\r\n            }\r\n            &:after {\r\n                transform: rotate(45deg);\r\n            }\r\n            &:hover,\r\n            &:focus {\r\n                &:before,\r\n                &:after {\r\n                    background: $accent;\r\n                    left: 25%;\r\n                    width: 50%;\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    @include element(arrow-buttons) {\r\n        .arrow {\r\n            border-left: 2px solid $main;\r\n            border-top: 2px solid $main;\r\n            cursor: pointer;\r\n            height: 1.5rem;\r\n            position: absolute;\r\n            width: 1.5rem;\r\n            &:hover,\r\n            &:focus {\r\n                outline: none;\r\n                border-color: $accent;\r\n            }\r\n        }\r\n        .arrow-previous {\r\n            left: 2rem;\r\n            top: 50%;\r\n            transform: rotate(-45deg);\r\n            &:hover,\r\n            &:focus {\r\n                animation-duration: 1s;\r\n                animation-iteration-count: infinite;\r\n                animation-name: pulsingPrevious;\r\n            }\r\n        }\r\n        .arrow-next {\r\n            right: 2rem;\r\n            top: 50%;\r\n            transform: rotate(135deg);\r\n            &:hover,\r\n            &:focus {\r\n                animation-duration: 1s;\r\n                animation-iteration-count: infinite;\r\n                animation-name: pulsingNext;\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n// Animations\r\n@keyframes pulsingNext {\r\n    0%   {\r\n        animation-timing-function: ease-in;\r\n        right: 2rem;\r\n    }\r\n    25%  {\r\n        animation-timing-function: ease-in;\r\n        right: 1.75rem;\r\n    }\r\n    75%  {\r\n        animation-timing-function: ease-in;\r\n        right: 2.25rem;\r\n    }\r\n    100% {\r\n        animation-timing-function: ease-in;\r\n        right: 2rem;\r\n    }\r\n}\r\n@keyframes pulsingPrevious {\r\n    0%   {\r\n        animation-timing-function: ease-in;\r\n        left: 2rem;\r\n    }\r\n    25%  {\r\n        animation-timing-function: ease-in;\r\n        left: 1.75rem;\r\n    }\r\n    75%  {\r\n        animation-timing-function: ease-in;\r\n        left: 2.25rem;\r\n    }\r\n    100% {\r\n        animation-timing-function: ease-in;\r\n        left: 2rem;\r\n    }\r\n}\r\n</style>",".silentbox-is-opened {\n  overflow: hidden;\n}\n\n#silentbox-overlay {\n  display: block;\n  height: 100vh;\n  left: 0;\n  position: fixed;\n  top: 0;\n  width: 100vw;\n  z-index: 999;\n}\n#silentbox-overlay__background {\n  background: rgba(0, 0, 0, 0.75);\n  backdrop-filter: blur(20px);\n  cursor: default;\n  display: block;\n  height: 100%;\n  left: 0;\n  position: absolute;\n  top: 0;\n  width: 100%;\n}\n#silentbox-overlay__content {\n  cursor: default;\n  display: block;\n  height: 100%;\n  position: relative;\n  width: 100%;\n}\n#silentbox-overlay__embed {\n  bottom: 0;\n  cursor: default;\n  display: block;\n  height: 80%;\n  left: 0;\n  margin: auto;\n  position: absolute;\n  right: 0;\n  top: -2.5rem;\n  width: 75%;\n}\n#silentbox-overlay__embed img,\n#silentbox-overlay__embed iframe {\n  background-color: #000;\n  bottom: 0;\n  box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.45);\n  cursor: default;\n  display: block;\n  left: 0;\n  margin: auto;\n  max-height: 100%;\n  max-width: 100%;\n  position: absolute;\n  right: 0;\n  top: 0;\n}\n#silentbox-overlay__container {\n  cursor: default;\n  height: 100%;\n  margin: 0 0 1.5rem 0;\n  position: relative;\n  text-align: center;\n  width: 100%;\n}\n#silentbox-overlay__description {\n  display: block;\n  padding-top: 1rem;\n  text-align: center;\n  color: #fff;\n}\n#silentbox-overlay__close-button {\n  background: rgba(0, 0, 0, 0);\n  border: none;\n  color: #fff;\n  cursor: pointer;\n  height: 2.5rem;\n  position: absolute;\n  right: 0;\n  top: 0;\n  transition: background-color 250ms ease-out;\n  width: 2.5rem;\n}\n#silentbox-overlay__close-button:hover, #silentbox-overlay__close-button:focus {\n  background-color: rgba(0, 0, 0, 0.5);\n  outline: none;\n}\n#silentbox-overlay__close-button .icon {\n  color: #fff;\n  cursor: pointer;\n  height: 1rem;\n  left: 0.7rem;\n  margin: 50% 50% 0 0;\n  position: absolute;\n  right: 0px;\n  top: -0.5rem;\n  transition: 250ms ease;\n  width: 1rem;\n}\n#silentbox-overlay__close-button .icon:before, #silentbox-overlay__close-button .icon:after {\n  background: #fff;\n  content: \"\";\n  height: 2px;\n  left: 5%;\n  position: absolute;\n  top: 50%;\n  transition: 250ms ease;\n  width: 100%;\n}\n#silentbox-overlay__close-button .icon:before {\n  transform: rotate(-45deg);\n}\n#silentbox-overlay__close-button .icon:after {\n  transform: rotate(45deg);\n}\n#silentbox-overlay__close-button .icon:hover:before, #silentbox-overlay__close-button .icon:hover:after, #silentbox-overlay__close-button .icon:focus:before, #silentbox-overlay__close-button .icon:focus:after {\n  background: #58e8d2;\n  left: 25%;\n  width: 50%;\n}\n#silentbox-overlay__arrow-buttons .arrow {\n  border-left: 2px solid #fff;\n  border-top: 2px solid #fff;\n  cursor: pointer;\n  height: 1.5rem;\n  position: absolute;\n  width: 1.5rem;\n}\n#silentbox-overlay__arrow-buttons .arrow:hover, #silentbox-overlay__arrow-buttons .arrow:focus {\n  outline: none;\n  border-color: #58e8d2;\n}\n#silentbox-overlay__arrow-buttons .arrow-previous {\n  left: 2rem;\n  top: 50%;\n  transform: rotate(-45deg);\n}\n#silentbox-overlay__arrow-buttons .arrow-previous:hover, #silentbox-overlay__arrow-buttons .arrow-previous:focus {\n  animation-duration: 1s;\n  animation-iteration-count: infinite;\n  animation-name: pulsingPrevious;\n}\n#silentbox-overlay__arrow-buttons .arrow-next {\n  right: 2rem;\n  top: 50%;\n  transform: rotate(135deg);\n}\n#silentbox-overlay__arrow-buttons .arrow-next:hover, #silentbox-overlay__arrow-buttons .arrow-next:focus {\n  animation-duration: 1s;\n  animation-iteration-count: infinite;\n  animation-name: pulsingNext;\n}\n\n@keyframes pulsingNext {\n  0% {\n    animation-timing-function: ease-in;\n    right: 2rem;\n  }\n  25% {\n    animation-timing-function: ease-in;\n    right: 1.75rem;\n  }\n  75% {\n    animation-timing-function: ease-in;\n    right: 2.25rem;\n  }\n  100% {\n    animation-timing-function: ease-in;\n    right: 2rem;\n  }\n}\n@keyframes pulsingPrevious {\n  0% {\n    animation-timing-function: ease-in;\n    left: 2rem;\n  }\n  25% {\n    animation-timing-function: ease-in;\n    left: 1.75rem;\n  }\n  75% {\n    animation-timing-function: ease-in;\n    left: 2.25rem;\n  }\n  100% {\n    animation-timing-function: ease-in;\n    left: 2rem;\n  }\n}\n\n/*# sourceMappingURL=overlay.vue.map */"]}, media: undefined });
+        inject("data-v-fe3f94ec_0", { source: ".silentbox-is-opened {\n  overflow: hidden;\n}\n#silentbox-overlay {\n  display: block;\n  height: 100vh;\n  left: 0;\n  position: fixed;\n  top: 0;\n  width: 100vw;\n  z-index: 999;\n}\n#silentbox-overlay__background {\n  background: rgba(0, 0, 0, 0.75);\n  backdrop-filter: blur(20px);\n  cursor: default;\n  display: block;\n  height: 100%;\n  left: 0;\n  position: absolute;\n  top: 0;\n  width: 100%;\n}\n#silentbox-overlay__content {\n  cursor: default;\n  display: block;\n  height: 100%;\n  position: relative;\n  width: 100%;\n}\n#silentbox-overlay__embed {\n  bottom: 0;\n  cursor: default;\n  display: block;\n  height: 80%;\n  left: 0;\n  margin: auto;\n  position: absolute;\n  right: 0;\n  top: -2.5rem;\n  width: 75%;\n}\n#silentbox-overlay__embed img,\n#silentbox-overlay__embed iframe {\n  background-color: #000;\n  bottom: 0;\n  box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.45);\n  cursor: default;\n  display: block;\n  left: 0;\n  margin: auto;\n  max-height: 100%;\n  max-width: 100%;\n  position: absolute;\n  right: 0;\n  top: 0;\n}\n#silentbox-overlay__container {\n  cursor: default;\n  height: 100%;\n  margin: 0 0 1.5rem 0;\n  position: relative;\n  text-align: center;\n  width: 100%;\n}\n#silentbox-overlay__description {\n  display: block;\n  padding-top: 1rem;\n  text-align: center;\n  color: #fff;\n}\n#silentbox-overlay__close-button {\n  background: rgba(0, 0, 0, 0);\n  border: none;\n  color: #fff;\n  cursor: pointer;\n  height: 2.5rem;\n  position: absolute;\n  right: 0;\n  top: 0;\n  transition: background-color 250ms ease-out;\n  width: 2.5rem;\n}\n#silentbox-overlay__close-button:hover, #silentbox-overlay__close-button:focus {\n  background-color: rgba(0, 0, 0, 0.5);\n  outline: none;\n}\n#silentbox-overlay__close-button .icon {\n  color: #fff;\n  cursor: pointer;\n  height: 1rem;\n  left: 0.7rem;\n  margin: 50% 50% 0 0;\n  position: absolute;\n  right: 0px;\n  top: -0.5rem;\n  transition: 250ms ease;\n  width: 1rem;\n}\n#silentbox-overlay__close-button .icon:before, #silentbox-overlay__close-button .icon:after {\n  background: #fff;\n  content: \"\";\n  height: 2px;\n  left: 5%;\n  position: absolute;\n  top: 50%;\n  transition: 250ms ease;\n  width: 100%;\n}\n#silentbox-overlay__close-button .icon:before {\n  transform: rotate(-45deg);\n}\n#silentbox-overlay__close-button .icon:after {\n  transform: rotate(45deg);\n}\n#silentbox-overlay__close-button .icon:hover:before, #silentbox-overlay__close-button .icon:hover:after, #silentbox-overlay__close-button .icon:focus:before, #silentbox-overlay__close-button .icon:focus:after {\n  background: #58e8d2;\n  left: 25%;\n  width: 50%;\n}\n#silentbox-overlay__arrow-buttons .arrow {\n  border-left: 2px solid #fff;\n  border-top: 2px solid #fff;\n  cursor: pointer;\n  height: 1.5rem;\n  position: absolute;\n  width: 1.5rem;\n}\n#silentbox-overlay__arrow-buttons .arrow:hover, #silentbox-overlay__arrow-buttons .arrow:focus {\n  outline: none;\n  border-color: #58e8d2;\n}\n#silentbox-overlay__arrow-buttons .arrow-previous {\n  left: 2rem;\n  top: 50%;\n  transform: rotate(-45deg);\n}\n#silentbox-overlay__arrow-buttons .arrow-previous:hover, #silentbox-overlay__arrow-buttons .arrow-previous:focus {\n  animation-duration: 1s;\n  animation-iteration-count: infinite;\n  animation-name: pulsingPrevious;\n}\n#silentbox-overlay__arrow-buttons .arrow-next {\n  right: 2rem;\n  top: 50%;\n  transform: rotate(135deg);\n}\n#silentbox-overlay__arrow-buttons .arrow-next:hover, #silentbox-overlay__arrow-buttons .arrow-next:focus {\n  animation-duration: 1s;\n  animation-iteration-count: infinite;\n  animation-name: pulsingNext;\n}\n@keyframes pulsingNext {\n0% {\n    animation-timing-function: ease-in;\n    right: 2rem;\n}\n25% {\n    animation-timing-function: ease-in;\n    right: 1.75rem;\n}\n75% {\n    animation-timing-function: ease-in;\n    right: 2.25rem;\n}\n100% {\n    animation-timing-function: ease-in;\n    right: 2rem;\n}\n}\n@keyframes pulsingPrevious {\n0% {\n    animation-timing-function: ease-in;\n    left: 2rem;\n}\n25% {\n    animation-timing-function: ease-in;\n    left: 1.75rem;\n}\n75% {\n    animation-timing-function: ease-in;\n    left: 2.25rem;\n}\n100% {\n    animation-timing-function: ease-in;\n    left: 2rem;\n}\n}\n\n/*# sourceMappingURL=overlay.vue.map */", map: {"version":3,"sources":["/home/gfrymer/blink/silentbox/components/overlay.vue","overlay.vue"],"names":[],"mappings":"AA0WA;EACA,gBAAA;ACzWA;AD4WA;EACA,cAAA;EACA,aAAA;EACA,OAAA;EACA,eAAA;EACA,MAAA;EACA,YAAA;EACA,YAAA;ACzWA;ADoVA;EAwBA,+BAAA;EACA,2BAAA;EACA,eAAA;EACA,cAAA;EACA,YAAA;EACA,OAAA;EACA,kBAAA;EACA,MAAA;EACA,WAAA;ACzWA;ADyUA;EAoCA,eAAA;EACA,cAAA;EACA,YAAA;EACA,kBAAA;EACA,WAAA;AC1WA;ADkUA;EA4CA,SAAA;EACA,eAAA;EACA,cAAA;EACA,WAAA;EACA,OAAA;EACA,YAAA;EACA,kBAAA;EACA,QAAA;EACA,YAAA;EACA,UAAA;AC3WA;AD6WA;;EAEA,sBAjDA;EAkDA,SAAA;EACA,0CAAA;EACA,eAAA;EACA,cAAA;EACA,OAAA;EACA,YAAA;EACA,gBAAA;EACA,eAAA;EACA,kBAAA;EACA,QAAA;EACA,MAAA;AC3WA;ADuSA;EAyEA,eAAA;EACA,YAAA;EACA,oBAAA;EACA,kBAAA;EACA,kBAAA;EACA,WAAA;AC7WA;AD+RA;EAkFA,cAAA;EACA,iBAAA;EACA,kBAAA;EACA,WA/EA;AC/RA;ADyRA;EAyFA,4BAAA;EACA,YAAA;EACA,WArFA;EAsFA,eAAA;EACA,cAAA;EACA,kBAAA;EACA,QAAA;EACA,MAAA;EACA,2CAAA;EACA,aAAA;AC/WA;ADgXA;EAEA,oCAAA;EACA,aAAA;AC/WA;ADkXA;EACA,WApGA;EAqGA,eAAA;EACA,YAAA;EACA,YAAA;EACA,mBAAA;EACA,kBAAA;EACA,UAAA;EACA,YAAA;EACA,sBAAA;EACA,WAAA;AChXA;ADiXA;EAEA,gBAhHA;EAiHA,WAAA;EACA,WAAA;EACA,QAAA;EACA,kBAAA;EACA,QAAA;EACA,sBAAA;EACA,WAAA;AChXA;ADkXA;EACA,yBAAA;AChXA;ADkXA;EACA,wBAAA;AChXA;ADoXA;EAEA,mBAlIA;EAmIA,SAAA;EACA,UAAA;ACnXA;AD0XA;EACA,2BAAA;EACA,0BAAA;EACA,eAAA;EACA,cAAA;EACA,kBAAA;EACA,aAAA;ACxXA;ADyXA;EAEA,aAAA;EACA,qBArJA;ACnOA;AD2XA;EACA,UAAA;EACA,QAAA;EACA,yBAAA;ACzXA;AD0XA;EAEA,sBAAA;EACA,mCAAA;EACA,+BAAA;ACzXA;AD4XA;EACA,WAAA;EACA,QAAA;EACA,yBAAA;AC1XA;AD2XA;EAEA,sBAAA;EACA,mCAAA;EACA,2BAAA;AC1XA;ADiYA;AACA;IACA,kCAAA;IACA,WAAA;AC9XE;ADgYF;IACA,kCAAA;IACA,cAAA;AC9XE;ADgYF;IACA,kCAAA;IACA,cAAA;AC9XE;ADgYF;IACA,kCAAA;IACA,WAAA;AC9XE;AACF;ADgYA;AACA;IACA,kCAAA;IACA,UAAA;AC9XE;ADgYF;IACA,kCAAA;IACA,aAAA;AC9XE;ADgYF;IACA,kCAAA;IACA,aAAA;AC9XE;ADgYF;IACA,kCAAA;IACA,UAAA;AC9XE;AACF;;AAEA,sCAAsC","file":"overlay.vue","sourcesContent":["<template>\r\n    <div id=\"silentbox-overlay\" v-if=\"isVisible\">\r\n        <div id=\"silentbox-overlay__background\" @click.stop=\"closeSilentboxOverlay\"></div>\r\n\r\n        <div id=\"silentbox-overlay__content\" @click.stop=\"closeSilentboxOverlay\">\r\n            <div id=\"silentbox-overlay__embed\">\r\n                <div ref=\"mediaContainer\" id=\"silentbox-overlay__container\">\r\n                    <div :style=\"showImg0\" ref=\"mediaElement0\">\r\n\t\t                    <main class=\"empty-state\" v-if=\"getLoading0\">\r\n\t\t                        <beat-loader :color=\"loadingColor\" size=\"15px\"></beat-loader>\r\n\t\t                    </main>\r\n\t\t                    <iframe :style=\"displayImg0\" ref=\"mediaElement0\" width=\"100%\" height=\"100%\" v-if=\"video0\" :src=\"getEmbedUrl0\" frameborder=\"0\" :allow=\"getAutoplayState\" allowfullscreen></iframe>\r\n\t\t                    <img :style=\"displayImg0\" width=\"auto\" height=\"auto\" :src=\"getEmbedUrl0\" v-if=\"! video0\">\r\n\t\t                </div>\r\n                    <div :style=\"showImg1\" ref=\"mediaElement1\">\r\n\t\t                    <main class=\"empty-state\" v-if=\"getLoading1\">\r\n\t\t                        <beat-loader :color=\"loadingColor\" size=\"15px\"></beat-loader>\r\n\t\t                    </main>\r\n\t\t                    <iframe :style=\"displayImg1\" ref=\"mediaElement0\" width=\"100%\" height=\"100%\" v-if=\"video1\" :src=\"getEmbedUrl1\" frameborder=\"0\" :allow=\"getAutoplayState\" allowfullscreen></iframe>\r\n\t\t                    <img :style=\"displayImg1\" width=\"auto\" height=\"auto\" :src=\"getEmbedUrl1\" v-if=\"! video1\">\r\n\t\t                </div>\r\n                    <div :style=\"showImg2\" ref=\"mediaElement2\">\r\n\t\t                    <main class=\"empty-state\" v-if=\"getLoading2\">\r\n\t\t                        <beat-loader :color=\"loadingColor\" size=\"15px\"></beat-loader>\r\n\t\t                    </main>\r\n\t\t                    <iframe :style=\"displayImg2\" ref=\"mediaElement0\" width=\"100%\" height=\"100%\" v-if=\"video2\" :src=\"getEmbedUrl2\" frameborder=\"0\" :allow=\"getAutoplayState\" allowfullscreen></iframe>\r\n\t\t                    <img :style=\"displayImg2\" width=\"auto\" height=\"auto\" :src=\"getEmbedUrl2\" v-if=\"! video2\">\r\n\t\t                </div>\r\n                </div>\r\n\r\n                <p id=\"silentbox-overlay__description\" v-if=\"this.$parent.description\">{{ this.$parent.description }}</p>\r\n                <div class=\"add-to-collection-fullscreen-gallery\" @click.stop=\"stopTheEvent\" v-if=\"isSelectable\">\r\n                <b-checkbox\r\n                    class=\"form-check-input\"\r\n                    :id=\"`overlayAssetSelector${this.$parent.item.id}`\"\r\n                    type=\"checkbox\"\r\n                    aria-label=\"...\"\r\n                    v-model=\"isSelected\"\r\n                    :disabled=\"(this.$parent.total!=999999) && (this.$parent.selection.length >= this.$parent.total) && (this.$parent.selection.indexOf(this.$parent.item) == -1)\"\r\n                >\r\n                <span>Add to selection <strong v-if=\"this.$parent.total!=999999\">({{this.$parent.selection.length}}/{{this.$parent.total}})</strong></span>\r\n                \r\n                </b-checkbox>\r\n                </div>\r\n            </div>\r\n        </div>\r\n\r\n        <div id=\"silentbox-overlay__close-button\" role=\"button\" tabindex=\"3\" @click.stop=\"closeSilentboxOverlay\" @keyup.enter=\"closeSilentboxOverlay\">\r\n            <div class=\"icon\"></div>\r\n        </div>\r\n\r\n        <div id=\"silentbox-overlay__arrow-buttons\" v-if=\"this.$parent.items.total > 0\">\r\n            <div class=\"arrow arrow-previous\" role=\"button\" tabindex=\"2\" @click=\"moveToPreviousItem\" @keyup.enter=\"moveToPreviousItem\"></div>\r\n            <div class=\"arrow arrow-next\" role=\"button\" tabindex=\"1\" @click=\"moveToNextItem\" @keyup.enter=\"moveToNextItem\"></div>\r\n        </div>\r\n    </div>\r\n</template>\r\n\r\n<script>\r\n    import VideoUrlDecoderMixin from './../mixins/videoUrlDecoder';\r\n    import imagesLoaded from 'imagesloaded';\r\n\r\n    export default {\r\n        name: 'SilentboxOverlay',\r\n        mixins: [ VideoUrlDecoderMixin ],\r\n        data() {\r\n            return {\r\n                video0: false,\r\n                video1: false,\r\n                video2: false,\r\n                imgLoad0: null,\r\n                imgLoad1: null,\r\n                imgLoad2: null,\r\n            }\r\n        },\r\n        computed: {\r\n            isSelectable() {\r\n                return this.$parent.total > 0;\r\n            },\r\n            loadingColor() {\r\n                return getComputedStyle(document.documentElement).getPropertyValue('--white');\r\n            },\r\n            isSelected: {\r\n                get() {\r\n                    return (this.$parent.selection && this.$parent.selection.indexOf(this.$parent.item) > -1);\r\n                },\r\n                set(newVal) {\r\n                \t\tif (this.$parent.selection && this.$parent.selection.indexOf(this.$parent.item) > -1) {\r\n                \t\t    if (!newVal) {\r\n                \t\t        this.$parent.selection.splice(this.$parent.selection.indexOf(this.$parent.item),1);\r\n                \t\t    }\r\n                \t\t}\r\n                \t\telse {\r\n                \t\t    if (newVal) {\r\n                \t\t        this.$parent.selection.push(this.$parent.item);\r\n                \t\t    }\r\n                \t\t}\r\n                },\r\n            },\r\n            showImg0() {\r\n                return \"justify-content:center;display:flex;flex-direction:column;position:absolute;width:100%;height:100%;\" + this.$parent.img[0];\r\n            },\r\n            showImg1() {\r\n                return \"justify-content:center;display:flex;flex-direction:column;position:absolute;width:100%;height:100%;\" + this.$parent.img[1];\r\n            },\r\n            showImg2() {\r\n                return \"justify-content:center;display:flex;flex-direction:column;position:absolute;width:100%;height:100%;\" + this.$parent.img[2];\r\n            },\r\n            displayImg0() {\r\n                if (this.getLoading0) {\r\n                    return \"display:none;\";\r\n                }\r\n                return \"\";\r\n            },\r\n            displayImg1() {\r\n                if (this.getLoading1) {\r\n                    return \"display:none;\";\r\n                }\r\n                return \"\";\r\n            },\r\n            displayImg2() {\r\n                if (this.getLoading2) {\r\n                    return \"display:none;\";\r\n                }\r\n                return \"\";\r\n            },\r\n            getLoading0() {\r\n                return this.$parent.loading[0];\r\n            },\r\n            getLoading1() {\r\n                return this.$parent.loading[1];\r\n            },\r\n            getLoading2() {\r\n                return this.$parent.loading[2];\r\n            },\r\n            /**\r\n             * Get the right embed URL.\r\n             */\r\n            getEmbedUrl0() {\r\n                return this.handleUrl(this.$parent.embedUrl[0],0);\r\n            },\r\n            /**\r\n             * Get the right embed URL.\r\n             */\r\n            getEmbedUrl1() {\r\n                return this.handleUrl(this.$parent.embedUrl[1],1);\r\n            },\r\n            /**\r\n             * Get the right embed URL.\r\n             */\r\n            getEmbedUrl2() {\r\n                return this.handleUrl(this.$parent.embedUrl[2],2);\r\n            },\r\n            /**\r\n             * Get autoplay state.\r\n             */\r\n            getAutoplayState() {\r\n                if (this.$parent.autoplay !== undefined && this.$parent.autoplay !== false) {\r\n                    return \"autoplay\";\r\n                }\r\n                 return \"\";\r\n            },\r\n            /**\r\n             * Check whether overlay is visible or not.\r\n             */\r\n            isVisible() {\r\n                if (this.$parent.overlayVisibility !== undefined && this.$parent.overlayVisibility !== false) {\r\n                    this.$parent.setLoadingAll();\r\n                    return true;\r\n                }\r\n\r\n                return false;\r\n            }\r\n        },\r\n        watch: {\r\n            isVisible: function (value) {\r\n                if (document !== undefined) {\r\n                    this.bodyScrolling();\r\n                }\r\n            }\r\n        },\r\n        methods: {\r\n            bodyScrolling() {\r\n                let body = document.body;\r\n\r\n                // add class only if overlay should be visible\r\n                if (this.isVisible && ! body.classList.contains('silentbox-is-opened')) {\r\n                    this.$nextTick(() => {\r\n                        switch (this.curr) {\r\n                        \tcase 0: this.$refs.mediaElement0.scrollIntoView({ behavior: 'smooth', block: 'center' }); break;\r\n                        \tcase 1: this.$refs.mediaElement1.scrollIntoView({ behavior: 'smooth', block: 'center' }); break;\r\n                        \tcase 2: this.$refs.mediaElement2.scrollIntoView({ behavior: 'smooth', block: 'center' }); break;\r\n                        }\r\n                    });\r\n                    return body.classList.add('silentbox-is-opened');\r\n                }\r\n\r\n                // remove class only if overlay should be hidden\r\n                if (! this.isVisible && body.classList.contains('silentbox-is-opened')) {\r\n                    return body.classList.remove('silentbox-is-opened')\r\n                }\r\n            },\r\n            /**\r\n             * Move to next item.\r\n             */\r\n            moveToNextItem() {\r\n                if (this.$parent.loading[0]) {\r\n                    this.imgLoad0.off('always',this.imgsLoaded0);\r\n                    this.imgLoad0 = null;\r\n                }\r\n                if (this.$parent.loading[1]) {\r\n                    this.imgLoad1.off('always',this.imgsLoaded1);\r\n                    this.imgLoad1 = null;\r\n                }\r\n                if (this.$parent.loading[2]) {\r\n                    this.imgLoad2.off('always',this.imgsLoaded2);\r\n                    this.imgLoad2 = null;\r\n                }\r\n/*                if (this.loading) {\r\n                    this.imgLoad.off('always',this.imgsLoaded);\r\n                    this.imgLoad = null;\r\n                }\r\n                this.loading = true;*/\r\n                this.$parent.nextItem();\r\n            },\r\n            /**\r\n             * Move to previous item.\r\n             */\r\n            moveToPreviousItem()\r\n            {\r\n                if (this.$parent.loading[0]) {\r\n                    this.imgLoad0.off('always',this.imgsLoaded0);\r\n                    this.imgLoad0 = null;\r\n                }\r\n                if (this.$parent.loading[1]) {\r\n                    this.imgLoad1.off('always',this.imgsLoaded1);\r\n                    this.imgLoad1 = null;\r\n                }\r\n                if (this.$parent.loading[2]) {\r\n                    this.imgLoad2.off('always',this.imgsLoaded2);\r\n                    this.imgLoad2 = null;\r\n                }\r\n//                this.loading = true;\r\n                this.$parent.prevItem();\r\n            },\r\n            stopTheEvent(event)\r\n            {\r\n                event.stopPropagation();\r\n            },\r\n            /**\r\n             * Hide silentbox overlay.\r\n             */\r\n            closeSilentboxOverlay() {\r\n                this.$parent.$emit('closeSilentboxOverlay');\r\n            },\r\n            /**\r\n             * Search for known video services URLs and return their players if recognized.\r\n             * Unrecognized URLs are handled as images.\r\n             * \r\n             * @param  {string} url\r\n             * @return {string}\r\n             */\r\n            handleUrl(url,position) {\r\n                if (url.includes('youtube.com') || url.includes('youtu.be')) {\r\n                    switch (position) { case 0: this.video0 = true; break; case 1: this.video1 = true; break; case 2: this.video2 = true; break; };\r\n                    return this.getYoutubeVideo(url);\r\n                } else if (url.includes(\"vimeo\")) {\r\n                    switch (position) { case 0: this.video0 = true; break; case 1: this.video1 = true; break; case 2: this.video2 = true; break; };\r\n                    return this.getVimeoVideo(url);\r\n                } else {\r\n                    // Given url is not a video URL thus return it as it is.\r\n                    switch (position) { case 0: this.video0 = false; break; case 1: this.video1 = false; break; case 2: this.video2 = false; break; };\r\n                    return url;\r\n                }\r\n            },\r\n            /**\r\n             * Get embed URL for youtube.com\r\n             * \r\n             * @param  {string} url \r\n             * @return {string} \r\n             */\r\n            getYoutubeVideo(url) {\r\n                let videoUrl = \"\";\r\n                let videoId  = this.getYoutubeVideoId(url);\r\n\r\n                if (videoId) {\r\n                    videoUrl = 'https://www.youtube.com/embed/' + videoId + '?rel=0';\r\n\r\n                    if (this.$parent.autoplay) {\r\n                        videoUrl += '&amp;autoplay=1';\r\n                    }\r\n                    if (this.$parent.showControls) {\r\n                        videoUrl += '&amp;controls=0';\r\n                    }\r\n                }\r\n\r\n                return videoUrl;\r\n            },\r\n            /**\r\n             * Get embed URL for vimeo.com\r\n             * \r\n             * @param  {string} url \r\n             * @return {string} \r\n             */\r\n            getVimeoVideo(url) {          \r\n                    let videoUrl = \"\";\r\n                    const vimoId = /(vimeo(pro)?\\.com)\\/(?:[^\\d]+)?(\\d+)\\??(.*)?$/.exec(url)[3];\r\n\r\n                    if (vimoId !== undefined) {\r\n                        videoUrl = 'https://player.vimeo.com/video/'+ vimoId + '?api=1';\r\n                        if (this.$parent.autoplay) {\r\n                            videoUrl += '&autoplay=1';\r\n                        }\r\n                    }\r\n\r\n                    return videoUrl;\r\n            },\r\n\t\t        imgsLoaded0() {\r\n                this.$parent.setLoading(false,0);\r\n                this.imgLoad0.off('always',this.imgsLoaded0);\r\n                this.imgLoad0 = null;\r\n\t\t        },\r\n\t\t        imgsLoaded1() {\r\n                this.$parent.setLoading(false,1);\r\n                this.imgLoad1.off('always',this.imgsLoaded1);\r\n                this.imgLoad1 = null;\r\n\t\t        },\r\n\t\t        imgsLoaded2() {\r\n                this.$parent.setLoading(false,2);\r\n                this.imgLoad2.off('always',this.imgsLoaded2);\r\n                this.imgLoad2 = null;\r\n\t\t        },\r\n        },\r\n        updated() {\r\n            if ((this.$refs.mediaElement0) && (!this.imgLoad0) && (this.$parent.loading[0])) {\r\n                this.imgLoad0 = imagesLoaded(this.$refs.mediaElement0);\r\n                this.imgLoad0.on('always',this.imgsLoaded0);\r\n            }\r\n            if ((this.$refs.mediaElement1) && (!this.imgLoad1) && (this.$parent.loading[1])) {\r\n                this.imgLoad1 = imagesLoaded(this.$refs.mediaElement1);\r\n                this.imgLoad1.on('always',this.imgsLoaded1);\r\n            }\r\n            if ((this.$refs.mediaElement2) && (!this.imgLoad2) && (this.$parent.loading[2])) {\r\n                this.imgLoad2 = imagesLoaded(this.$refs.mediaElement2);\r\n                this.imgLoad2.on('always',this.imgsLoaded2);\r\n            }\r\n        }\r\n    }\r\n</script>\r\n\r\n<style lang=\"scss\">\r\n@mixin element($element) {\r\n    &__#{$element} {\r\n        @content;\r\n    }\r\n}\r\n\r\n// Colours used in silentbox\r\n$main:   #fff;\r\n$accent: #58e8d2;\r\n$bg: #000;\r\n\r\n.silentbox-is-opened {\r\n    overflow: hidden;\r\n}\r\n\r\n#silentbox-overlay {\r\n    display: block;\r\n    height: 100vh;\r\n    left: 0;\r\n    position: fixed;\r\n    top: 0;\r\n    width: 100vw;\r\n    z-index: 999;\r\n\r\n    @include element(background) {\r\n        background: rgba($bg, .75);\r\n        backdrop-filter: blur(20px);\r\n        cursor: default;\r\n        display: block;\r\n        height: 100%;\r\n        left: 0;\r\n        position: absolute;\r\n        top: 0;\r\n        width: 100%;\r\n    }\r\n\r\n    @include element(content) {\r\n        cursor: default;\r\n        display: block;\r\n        height: 100%;\r\n        position: relative;\r\n        width: 100%;\r\n    }\r\n\r\n    @include element(embed) {\r\n        bottom: 0;\r\n        cursor: default;\r\n        display: block;\r\n        height: 80%;\r\n        left: 0;\r\n        margin: auto;\r\n        position: absolute;\r\n        right: 0;\r\n        top: -2.5rem;\r\n        width: 75%;\r\n\r\n        img,\r\n        iframe {\r\n            background-color: $bg;\r\n            bottom: 0;\r\n            box-shadow: 0 0 1.5rem rgba($bg, .45);\r\n            cursor: default;\r\n            display: block;\r\n            left: 0;\r\n            margin: auto;\r\n            max-height: 100%;\r\n            max-width: 100%;\r\n            position: absolute;\r\n            right: 0;\r\n            top: 0;\r\n        }\r\n    }\r\n\r\n    @include element(container) {\r\n        cursor: default;\r\n        height: 100%;\r\n        margin: 0 0 1.5rem 0;\r\n        position: relative;\r\n        text-align: center;\r\n        width: 100%;\r\n    }\r\n\r\n    @include element(description) {\r\n        display: block;\r\n        padding-top: 1rem;\r\n        text-align: center;\r\n        color: $main;\r\n    }\r\n\r\n    @include element(close-button) {\r\n        background: rgba($bg, .0);\r\n        border: none;\r\n        color: $main;\r\n        cursor: pointer;\r\n        height: 2.5rem;\r\n        position: absolute;\r\n        right: 0;\r\n        top: 0;\r\n        transition: background-color 250ms ease-out;\r\n        width: 2.5rem;\r\n        &:hover,\r\n        &:focus {\r\n            background-color: rgba($bg, .5);\r\n            outline: none;\r\n        }\r\n\r\n        .icon {\r\n            color: $main;\r\n            cursor: pointer;\r\n            height: 1rem;\r\n            left: .7rem;\r\n            margin: 50% 50% 0 0;\r\n            position: absolute;\r\n            right: 0px;\r\n            top: -.5rem;\r\n            transition: 250ms ease;\r\n            width: 1rem;\r\n            &:before,\r\n            &:after {\r\n                background: $main;\r\n                content: \"\";\r\n                height: 2px;\r\n                left: 5%;\r\n                position: absolute;\r\n                top: 50%;\r\n                transition: 250ms ease;\r\n                width: 100%;\r\n            }\r\n            &:before {\r\n                transform: rotate(-45deg);\r\n            }\r\n            &:after {\r\n                transform: rotate(45deg);\r\n            }\r\n            &:hover,\r\n            &:focus {\r\n                &:before,\r\n                &:after {\r\n                    background: $accent;\r\n                    left: 25%;\r\n                    width: 50%;\r\n                }\r\n            }\r\n        }\r\n    }\r\n\r\n    @include element(arrow-buttons) {\r\n        .arrow {\r\n            border-left: 2px solid $main;\r\n            border-top: 2px solid $main;\r\n            cursor: pointer;\r\n            height: 1.5rem;\r\n            position: absolute;\r\n            width: 1.5rem;\r\n            &:hover,\r\n            &:focus {\r\n                outline: none;\r\n                border-color: $accent;\r\n            }\r\n        }\r\n        .arrow-previous {\r\n            left: 2rem;\r\n            top: 50%;\r\n            transform: rotate(-45deg);\r\n            &:hover,\r\n            &:focus {\r\n                animation-duration: 1s;\r\n                animation-iteration-count: infinite;\r\n                animation-name: pulsingPrevious;\r\n            }\r\n        }\r\n        .arrow-next {\r\n            right: 2rem;\r\n            top: 50%;\r\n            transform: rotate(135deg);\r\n            &:hover,\r\n            &:focus {\r\n                animation-duration: 1s;\r\n                animation-iteration-count: infinite;\r\n                animation-name: pulsingNext;\r\n            }\r\n        }\r\n    }\r\n}\r\n\r\n// Animations\r\n@keyframes pulsingNext {\r\n    0%   {\r\n        animation-timing-function: ease-in;\r\n        right: 2rem;\r\n    }\r\n    25%  {\r\n        animation-timing-function: ease-in;\r\n        right: 1.75rem;\r\n    }\r\n    75%  {\r\n        animation-timing-function: ease-in;\r\n        right: 2.25rem;\r\n    }\r\n    100% {\r\n        animation-timing-function: ease-in;\r\n        right: 2rem;\r\n    }\r\n}\r\n@keyframes pulsingPrevious {\r\n    0%   {\r\n        animation-timing-function: ease-in;\r\n        left: 2rem;\r\n    }\r\n    25%  {\r\n        animation-timing-function: ease-in;\r\n        left: 1.75rem;\r\n    }\r\n    75%  {\r\n        animation-timing-function: ease-in;\r\n        left: 2.25rem;\r\n    }\r\n    100% {\r\n        animation-timing-function: ease-in;\r\n        left: 2rem;\r\n    }\r\n}\r\n</style>",".silentbox-is-opened {\n  overflow: hidden;\n}\n\n#silentbox-overlay {\n  display: block;\n  height: 100vh;\n  left: 0;\n  position: fixed;\n  top: 0;\n  width: 100vw;\n  z-index: 999;\n}\n#silentbox-overlay__background {\n  background: rgba(0, 0, 0, 0.75);\n  backdrop-filter: blur(20px);\n  cursor: default;\n  display: block;\n  height: 100%;\n  left: 0;\n  position: absolute;\n  top: 0;\n  width: 100%;\n}\n#silentbox-overlay__content {\n  cursor: default;\n  display: block;\n  height: 100%;\n  position: relative;\n  width: 100%;\n}\n#silentbox-overlay__embed {\n  bottom: 0;\n  cursor: default;\n  display: block;\n  height: 80%;\n  left: 0;\n  margin: auto;\n  position: absolute;\n  right: 0;\n  top: -2.5rem;\n  width: 75%;\n}\n#silentbox-overlay__embed img,\n#silentbox-overlay__embed iframe {\n  background-color: #000;\n  bottom: 0;\n  box-shadow: 0 0 1.5rem rgba(0, 0, 0, 0.45);\n  cursor: default;\n  display: block;\n  left: 0;\n  margin: auto;\n  max-height: 100%;\n  max-width: 100%;\n  position: absolute;\n  right: 0;\n  top: 0;\n}\n#silentbox-overlay__container {\n  cursor: default;\n  height: 100%;\n  margin: 0 0 1.5rem 0;\n  position: relative;\n  text-align: center;\n  width: 100%;\n}\n#silentbox-overlay__description {\n  display: block;\n  padding-top: 1rem;\n  text-align: center;\n  color: #fff;\n}\n#silentbox-overlay__close-button {\n  background: rgba(0, 0, 0, 0);\n  border: none;\n  color: #fff;\n  cursor: pointer;\n  height: 2.5rem;\n  position: absolute;\n  right: 0;\n  top: 0;\n  transition: background-color 250ms ease-out;\n  width: 2.5rem;\n}\n#silentbox-overlay__close-button:hover, #silentbox-overlay__close-button:focus {\n  background-color: rgba(0, 0, 0, 0.5);\n  outline: none;\n}\n#silentbox-overlay__close-button .icon {\n  color: #fff;\n  cursor: pointer;\n  height: 1rem;\n  left: 0.7rem;\n  margin: 50% 50% 0 0;\n  position: absolute;\n  right: 0px;\n  top: -0.5rem;\n  transition: 250ms ease;\n  width: 1rem;\n}\n#silentbox-overlay__close-button .icon:before, #silentbox-overlay__close-button .icon:after {\n  background: #fff;\n  content: \"\";\n  height: 2px;\n  left: 5%;\n  position: absolute;\n  top: 50%;\n  transition: 250ms ease;\n  width: 100%;\n}\n#silentbox-overlay__close-button .icon:before {\n  transform: rotate(-45deg);\n}\n#silentbox-overlay__close-button .icon:after {\n  transform: rotate(45deg);\n}\n#silentbox-overlay__close-button .icon:hover:before, #silentbox-overlay__close-button .icon:hover:after, #silentbox-overlay__close-button .icon:focus:before, #silentbox-overlay__close-button .icon:focus:after {\n  background: #58e8d2;\n  left: 25%;\n  width: 50%;\n}\n#silentbox-overlay__arrow-buttons .arrow {\n  border-left: 2px solid #fff;\n  border-top: 2px solid #fff;\n  cursor: pointer;\n  height: 1.5rem;\n  position: absolute;\n  width: 1.5rem;\n}\n#silentbox-overlay__arrow-buttons .arrow:hover, #silentbox-overlay__arrow-buttons .arrow:focus {\n  outline: none;\n  border-color: #58e8d2;\n}\n#silentbox-overlay__arrow-buttons .arrow-previous {\n  left: 2rem;\n  top: 50%;\n  transform: rotate(-45deg);\n}\n#silentbox-overlay__arrow-buttons .arrow-previous:hover, #silentbox-overlay__arrow-buttons .arrow-previous:focus {\n  animation-duration: 1s;\n  animation-iteration-count: infinite;\n  animation-name: pulsingPrevious;\n}\n#silentbox-overlay__arrow-buttons .arrow-next {\n  right: 2rem;\n  top: 50%;\n  transform: rotate(135deg);\n}\n#silentbox-overlay__arrow-buttons .arrow-next:hover, #silentbox-overlay__arrow-buttons .arrow-next:focus {\n  animation-duration: 1s;\n  animation-iteration-count: infinite;\n  animation-name: pulsingNext;\n}\n\n@keyframes pulsingNext {\n  0% {\n    animation-timing-function: ease-in;\n    right: 2rem;\n  }\n  25% {\n    animation-timing-function: ease-in;\n    right: 1.75rem;\n  }\n  75% {\n    animation-timing-function: ease-in;\n    right: 2.25rem;\n  }\n  100% {\n    animation-timing-function: ease-in;\n    right: 2rem;\n  }\n}\n@keyframes pulsingPrevious {\n  0% {\n    animation-timing-function: ease-in;\n    left: 2rem;\n  }\n  25% {\n    animation-timing-function: ease-in;\n    left: 1.75rem;\n  }\n  75% {\n    animation-timing-function: ease-in;\n    left: 2.25rem;\n  }\n  100% {\n    animation-timing-function: ease-in;\n    left: 2rem;\n  }\n}\n\n/*# sourceMappingURL=overlay.vue.map */"]}, media: undefined });
 
       };
       /* scoped */
@@ -1439,12 +1607,16 @@
         data: function data() {
             return {
                 overlayVisibility: false,
-                embedUrl: '',
+                embedUrl: ['','',''],
+                img: ['left: -250%;','','left: 250%;'],
+                loading: [true,true,true],
+                curr: 1,
                 items: {
                     total: 0,
                     position: 0,
                     list: []
                 },
+                interval: null,
                 autoplay: false,
                 item: null,
                 description: ''
@@ -1472,19 +1644,22 @@
             updateTotal: function updateTotal(items) {
                 this.items.total = this.items.list.length;
             },
-            /**
-             * Move to next item in a group.
-             *
-             * @return {void}
-             */
-            nextItem: function nextItem() {
+
+            doNextItem: function doNextItem() {
                 if (this.items.position !== (this.items.total - 1)) {
                     this.items.position++;
                 } else {
                     this.items.position = 0;
                 }
 
-                this.embedUrl = this.items.list[this.items.position].src;
+                this.embedUrl[this.curr == 0 ? 2 : this.curr - 1] = this.items.list[(this.items.position == this.items.total - 1) ? 0 : this.items.position + 1].src;
+                this.loading[this.curr == 0 ? 2 : this.curr - 1] = true;
+                this.img[this.curr == 0 ? 2 : this.curr - 1] = 'left: 250%';
+                this.embedUrl = [this.embedUrl[0],this.embedUrl[1],this.embedUrl[2]];
+                this.loading = [this.loading[0],this.loading[1],this.loading[2]];
+                this.img = [this.img[0],this.img[1],this.img[2]];
+
+                this.curr = (this.curr == 2) ? 0 : this.curr + 1;
 
                 this.autoplay = (this.items.list[this.items.position].autoplay !== undefined)
                     ? this.items.list[this.items.position].autoplay : false;
@@ -1495,19 +1670,48 @@
                 this.item = (this.items.list[this.items.position].item !== undefined)
                     ? this.items.list[this.items.position].item : null;
             },
+
             /**
-             * Move to previous item in a group.
+             * Move to next item in a group.
              *
              * @return {void}
              */
-            prevItem: function prevItem() {
+            nextItem: function nextItem() {
+            		if (this.interval) {
+            		   return;
+            		}
+            		var self = this;
+            		var pcntCurr = 0;
+            		var pcntNext = 250;
+            		this.interval = setInterval(function() {
+            		   self.img[self.curr] = 'left: ' + pcntCurr + '%';
+            		   self.img[self.curr == 2 ? 0 : self.curr + 1] = 'left: ' + pcntNext + '%';
+            		   self.img = [self.img[0],self.img[1],self.img[2]];
+            		   if (pcntNext == 0) {
+            		   		clearInterval(self.interval);
+            		   		self.doNextItem();
+            		   		self.interval = null;
+            		   }
+            		   pcntNext -= 25;
+            		   pcntCurr -= 25;
+                }, 50);
+            },
+
+            doPrevItem: function doPrevItem() {
                 if (this.items.position !== 0) {
                     this.items.position--;
                 } else {
                     this.items.position = this.items.total - 1;
                 }
 
-                this.embedUrl = this.items.list[this.items.position].src;
+                this.embedUrl[this.curr == 2 ? 0 : this.curr + 1] = this.items.list[(this.items.position==0) ? this.items.total - 1 : this.items.position - 1].src;
+                this.loading[this.curr == 2 ? 0 : this.curr + 1] = true;
+                this.img[this.curr == 2 ? 0 : this.curr + 1] = 'left: -250%';
+                this.embedUrl = [this.embedUrl[0],this.embedUrl[1],this.embedUrl[2]];
+                this.loading = [this.loading[0],this.loading[1],this.loading[2]];
+                this.img = [this.img[0],this.img[1],this.img[2]];
+
+                this.curr = (this.curr == 0) ? 2 : this.curr - 1;
 
                 this.autoplay = (this.items.list[this.items.position].autoplay !== undefined)
                     ? this.items.list[this.items.position] : false;
@@ -1518,18 +1722,57 @@
                 this.item = (this.items.list[this.items.position].item !== undefined)
                     ? this.items.list[this.items.position].item : null;
             },
+
+            /**
+             * Move to previous item in a group.
+             *
+             * @return {void}
+             */
+            prevItem: function prevItem() {
+            		if (this.interval) {
+            		   return;
+            		}
+            		var self = this;
+            		var pcntPrev = -250;
+            		var pcntCurr = 0;
+            		this.interval = setInterval(function() {
+            		   self.img[self.curr==0 ? 2 : self.curr - 1]  = 'left: ' + pcntPrev + '%';
+            		   self.img[self.curr] = 'left: ' + pcntCurr + '%';
+            		   self.img = [self.img[0],self.img[1],self.img[2]];
+            		   if (pcntPrev == 0) {
+            		   		clearInterval(self.interval);
+            		   		self.doPrevItem();
+            		   		self.interval = null;
+            		   }
+            		   pcntPrev += 25;
+            		   pcntCurr += 25;
+                }, 50);
+            },
+
             /**
              * Set item that shuld be displayed.
              *
              * @return {void}
              */
             setOpened: function setOpened(item) {
-                this.embedUrl = item.url;
+                this.curr = 1;
                 this.items.position = item.position;
+                this.embedUrl = [this.items.list[this.items.position==0 ? (this.items.total - 1) : (this.items.position - 1)].src, item.url, this.items.list[this.items.position==(this.items.total - 1) ? 0 : (this.items.position + 1)].src];
+                this.img = ['left: -250%;','','left: 250%;'];
+                this.loading = [true,true,true];
                 this.overlayVisibility = true;
                 this.autoplay = item.autoplay;
                 this.description = item.description;
                 this.item = item.item;
+            },
+
+            setLoadingAll: function setLoadingAll() {
+                this.loading = [true,true,true];
+            },
+
+            setLoading: function setLoading(ldng,pos) {
+                this.loading[pos] = ldng;
+                this.loading = [this.loading[0],this.loading[1],this.loading[2]];
             }
         },
         components: {

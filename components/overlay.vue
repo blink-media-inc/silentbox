@@ -5,11 +5,27 @@
         <div id="silentbox-overlay__content" @click.stop="closeSilentboxOverlay">
             <div id="silentbox-overlay__embed">
                 <div ref="mediaContainer" id="silentbox-overlay__container">
-		                <main class="empty-state" v-if="loading">
-		                    <beat-loader :color="loadingColor" size="15px"></beat-loader>
-		                </main>
-                    <iframe ref="mediaElement" width="100%" height="100%" v-if="video" :src="getEmbedUrl" frameborder="0" :allow="getAutoplayState" allowfullscreen></iframe>
-                    <img :style="showImg" ref="mediaElement" width="auto" height="auto" :src="getEmbedUrl" v-if="! video">
+                    <div :style="showImg0" ref="mediaElement0">
+		                    <main class="empty-state" v-if="getLoading0">
+		                        <beat-loader :color="loadingColor" size="15px"></beat-loader>
+		                    </main>
+		                    <iframe :style="displayImg0" ref="mediaElement0" width="100%" height="100%" v-if="video0" :src="getEmbedUrl0" frameborder="0" :allow="getAutoplayState" allowfullscreen></iframe>
+		                    <img :style="displayImg0" width="auto" height="auto" :src="getEmbedUrl0" v-if="! video0">
+		                </div>
+                    <div :style="showImg1" ref="mediaElement1">
+		                    <main class="empty-state" v-if="getLoading1">
+		                        <beat-loader :color="loadingColor" size="15px"></beat-loader>
+		                    </main>
+		                    <iframe :style="displayImg1" ref="mediaElement0" width="100%" height="100%" v-if="video1" :src="getEmbedUrl1" frameborder="0" :allow="getAutoplayState" allowfullscreen></iframe>
+		                    <img :style="displayImg1" width="auto" height="auto" :src="getEmbedUrl1" v-if="! video1">
+		                </div>
+                    <div :style="showImg2" ref="mediaElement2">
+		                    <main class="empty-state" v-if="getLoading2">
+		                        <beat-loader :color="loadingColor" size="15px"></beat-loader>
+		                    </main>
+		                    <iframe :style="displayImg2" ref="mediaElement0" width="100%" height="100%" v-if="video2" :src="getEmbedUrl2" frameborder="0" :allow="getAutoplayState" allowfullscreen></iframe>
+		                    <img :style="displayImg2" width="auto" height="auto" :src="getEmbedUrl2" v-if="! video2">
+		                </div>
                 </div>
 
                 <p id="silentbox-overlay__description" v-if="this.$parent.description">{{ this.$parent.description }}</p>
@@ -49,9 +65,12 @@
         mixins: [ VideoUrlDecoderMixin ],
         data() {
             return {
-                video: false,
-                loading: false,
-                imgLoad: null
+                video0: false,
+                video1: false,
+                video2: false,
+                imgLoad0: null,
+                imgLoad1: null,
+                imgLoad2: null,
             }
         },
         computed: {
@@ -78,17 +97,59 @@
                 		}
                 },
             },
-            showImg() {
-                if (this.loading) {
-                    return "display:none";
+            showImg0() {
+                return "justify-content:center;display:flex;flex-direction:column;position:absolute;width:100%;height:100%;" + this.$parent.img[0];
+            },
+            showImg1() {
+                return "justify-content:center;display:flex;flex-direction:column;position:absolute;width:100%;height:100%;" + this.$parent.img[1];
+            },
+            showImg2() {
+                return "justify-content:center;display:flex;flex-direction:column;position:absolute;width:100%;height:100%;" + this.$parent.img[2];
+            },
+            displayImg0() {
+                if (this.getLoading0) {
+                    return "display:none;";
                 }
                 return "";
+            },
+            displayImg1() {
+                if (this.getLoading1) {
+                    return "display:none;";
+                }
+                return "";
+            },
+            displayImg2() {
+                if (this.getLoading2) {
+                    return "display:none;";
+                }
+                return "";
+            },
+            getLoading0() {
+                return this.$parent.loading[0];
+            },
+            getLoading1() {
+                return this.$parent.loading[1];
+            },
+            getLoading2() {
+                return this.$parent.loading[2];
             },
             /**
              * Get the right embed URL.
              */
-            getEmbedUrl() {
-                return this.handleUrl(this.$parent.embedUrl);
+            getEmbedUrl0() {
+                return this.handleUrl(this.$parent.embedUrl[0],0);
+            },
+            /**
+             * Get the right embed URL.
+             */
+            getEmbedUrl1() {
+                return this.handleUrl(this.$parent.embedUrl[1],1);
+            },
+            /**
+             * Get the right embed URL.
+             */
+            getEmbedUrl2() {
+                return this.handleUrl(this.$parent.embedUrl[2],2);
             },
             /**
              * Get autoplay state.
@@ -104,7 +165,7 @@
              */
             isVisible() {
                 if (this.$parent.overlayVisibility !== undefined && this.$parent.overlayVisibility !== false) {
-                    this.loading = true;
+                    this.$parent.setLoadingAll();
                     return true;
                 }
 
@@ -125,7 +186,11 @@
                 // add class only if overlay should be visible
                 if (this.isVisible && ! body.classList.contains('silentbox-is-opened')) {
                     this.$nextTick(() => {
-                        this.$refs.mediaElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        switch (this.curr) {
+                        	case 0: this.$refs.mediaElement0.scrollIntoView({ behavior: 'smooth', block: 'center' }); break;
+                        	case 1: this.$refs.mediaElement1.scrollIntoView({ behavior: 'smooth', block: 'center' }); break;
+                        	case 2: this.$refs.mediaElement2.scrollIntoView({ behavior: 'smooth', block: 'center' }); break;
+                        }
                     });
                     return body.classList.add('silentbox-is-opened');
                 }
@@ -139,11 +204,23 @@
              * Move to next item.
              */
             moveToNextItem() {
-                if (this.loading) {
+                if (this.$parent.loading[0]) {
+                    this.imgLoad0.off('always',this.imgsLoaded0);
+                    this.imgLoad0 = null;
+                }
+                if (this.$parent.loading[1]) {
+                    this.imgLoad1.off('always',this.imgsLoaded1);
+                    this.imgLoad1 = null;
+                }
+                if (this.$parent.loading[2]) {
+                    this.imgLoad2.off('always',this.imgsLoaded2);
+                    this.imgLoad2 = null;
+                }
+/*                if (this.loading) {
                     this.imgLoad.off('always',this.imgsLoaded);
                     this.imgLoad = null;
                 }
-                this.loading = true;
+                this.loading = true;*/
                 this.$parent.nextItem();
             },
             /**
@@ -151,11 +228,19 @@
              */
             moveToPreviousItem()
             {
-                if (this.loading) {
-                    this.imgLoad.off('always',this.imgsLoaded);
-                    this.imgLoad = null;
+                if (this.$parent.loading[0]) {
+                    this.imgLoad0.off('always',this.imgsLoaded0);
+                    this.imgLoad0 = null;
                 }
-                this.loading = true;
+                if (this.$parent.loading[1]) {
+                    this.imgLoad1.off('always',this.imgsLoaded1);
+                    this.imgLoad1 = null;
+                }
+                if (this.$parent.loading[2]) {
+                    this.imgLoad2.off('always',this.imgsLoaded2);
+                    this.imgLoad2 = null;
+                }
+//                this.loading = true;
                 this.$parent.prevItem();
             },
             stopTheEvent(event)
@@ -175,16 +260,16 @@
              * @param  {string} url
              * @return {string}
              */
-            handleUrl(url) {
+            handleUrl(url,position) {
                 if (url.includes('youtube.com') || url.includes('youtu.be')) {
-                    this.video = true;
+                    switch (position) { case 0: this.video0 = true; break; case 1: this.video1 = true; break; case 2: this.video2 = true; break; };
                     return this.getYoutubeVideo(url);
                 } else if (url.includes("vimeo")) {
-                    this.video = true;
+                    switch (position) { case 0: this.video0 = true; break; case 1: this.video1 = true; break; case 2: this.video2 = true; break; };
                     return this.getVimeoVideo(url);
                 } else {
                     // Given url is not a video URL thus return it as it is.
-                    this.video = false;
+                    switch (position) { case 0: this.video0 = false; break; case 1: this.video1 = false; break; case 2: this.video2 = false; break; };
                     return url;
                 }
             },
@@ -230,16 +315,34 @@
 
                     return videoUrl;
             },
-		        imgsLoaded() {
-                this.loading = false;
-                this.imgLoad.off('always',this.imgsLoaded);
-                this.imgLoad = null;
+		        imgsLoaded0() {
+                this.$parent.setLoading(false,0);
+                this.imgLoad0.off('always',this.imgsLoaded0);
+                this.imgLoad0 = null;
+		        },
+		        imgsLoaded1() {
+                this.$parent.setLoading(false,1);
+                this.imgLoad1.off('always',this.imgsLoaded1);
+                this.imgLoad1 = null;
+		        },
+		        imgsLoaded2() {
+                this.$parent.setLoading(false,2);
+                this.imgLoad2.off('always',this.imgsLoaded2);
+                this.imgLoad2 = null;
 		        },
         },
         updated() {
-            if ((this.$refs.mediaContainer) && (!this.imgLoad) && (this.loading)) {
-                this.imgLoad = imagesLoaded(this.$refs.mediaContainer);
-                this.imgLoad.on('always',this.imgsLoaded);
+            if ((this.$refs.mediaElement0) && (!this.imgLoad0) && (this.$parent.loading[0])) {
+                this.imgLoad0 = imagesLoaded(this.$refs.mediaElement0);
+                this.imgLoad0.on('always',this.imgsLoaded0);
+            }
+            if ((this.$refs.mediaElement1) && (!this.imgLoad1) && (this.$parent.loading[1])) {
+                this.imgLoad1 = imagesLoaded(this.$refs.mediaElement1);
+                this.imgLoad1.on('always',this.imgsLoaded1);
+            }
+            if ((this.$refs.mediaElement2) && (!this.imgLoad2) && (this.$parent.loading[2])) {
+                this.imgLoad2 = imagesLoaded(this.$refs.mediaElement2);
+                this.imgLoad2.on('always',this.imgsLoaded2);
             }
         }
     }

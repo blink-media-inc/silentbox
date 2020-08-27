@@ -8,10 +8,11 @@
 
 <script>
     import ItemMixin from './../mixins/item';
+    import _ from 'lodash';
 
     export default {
         name: 'SilentboxItem',
-        mixins: [ ItemMixin ],
+        mixins: [ItemMixin],
         props: {
             // Media source, it could be an image or a youtube video.
             'src': {
@@ -60,6 +61,30 @@
                 return null;
             }
         },
+        created() {
+            // Push items to the parent component.
+            // TODO: do it in parent component
+            this.$parent.items.list.push({
+                src: this.src,
+                autoplay: this.autoplay,
+                item: this.item,
+                desc: this.description,
+                position: this.position
+            });
+        },
+        destroyed() {
+            var index = _.findIndex(this.$parent.items.list, {
+                src: this.src,
+                autoplay: this.autoplay,
+                item: this.item,
+                desc: this.description,
+                position: this.position
+            });
+
+            if (index > -1) {
+                this.$parent.items.list.splice(index, 1);
+            }
+        },
         methods: {
             /**
              * Emit an event that overlay should be hidden.
@@ -85,17 +110,6 @@
                     description: this.description
                 });
             }
-        },
-        created() {
-            // Push items to the parent component.
-            // TODO: do it in parent component
-            this.$parent.items.list.push({
-                src: this.src,
-                autoplay: this.autoplay,
-                item: this.item,
-                desc: this.description,
-                position: this.position
-            });
         }
     }
 </script>
